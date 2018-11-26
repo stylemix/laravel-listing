@@ -1,0 +1,28 @@
+{
+    "name": "stylemix/laravel-listing",
+    "description": "Listing functionality for Laravel applications",
+    "authors": [
+        {
+            "name": "Azamat H",
+            "email": "azamat.holmeer@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "elasticquent/elasticquent": "dev-master",
+        "plank/laravel-mediable": "^2.8"
+    },
+    "require-dev": {
+      "orchestra/testbench": "^3.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Stylemix\\Listing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "Stylemix\\Listing\\Tests\\": "tests/"
+      }
+    }
+}
