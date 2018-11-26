@@ -10,10 +10,16 @@ class EntityManager extends Container
 {
 	protected static $instance;
 
-	public static function entity($entityClass, $name = null)
+    /**
+     * Register an entity class
+     *
+     * @param string $class
+     * @param string $name
+     */
+	public function entity($class, $name = null)
 	{
-		$name = $name ?? snake_case(class_basename($entityClass));
-		self::getInstance()->bind($name, $entityClass);
+		$name = $name ?? snake_case(class_basename($class));
+		$this->bind($name, $class);
 	}
 
 	/**
@@ -29,28 +35,6 @@ class EntityManager extends Container
 	}
 
 	/**
-	 * Get overall status for entities
-	 *
-	 * @return array
-	 */
-	public function status()
-	{
-		$status = [];
-
-		foreach (array_keys($this->getBindings()) as $entity) {
-			$status[$entity] = \Settings::get('index-status.' . $entity, [
-				'remap' => false,
-				'indexing' => false,
-			]);
-			$model = $this->make($entity);
-			$status[$entity]['indexed'] = DB::table($model->getTable())->whereNotNull('indexed_at')->count();
-			$status[$entity]['unindexed'] = DB::table($model->getTable())->whereNull('indexed_at')->count();
-		}
-
-		return $status;
-	}
-
-	/**
 	 * Mark all entity records as un-indexed
 	 *
 	 * @param string $entity
@@ -58,40 +42,6 @@ class EntityManager extends Container
 	public function resetIndexed($entity)
 	{
 		DB::table($this->make($entity)->getTable())->update(['indexed_at' => null]);
-	}
-
-	/**
-	 * Set flag that remapping required for entity
-	 *
-	 * @param string $entity
-	 * @param bool $value
-	 *
-	 * @return boolean Current status
-	 */
-	public function remapStatus($entity, $value = null)
-	{
-		if (!is_null($value)) {
-			\Settings::set("index-status.{$entity}.remap", $value);
-		}
-
-		return \Settings::get("index-status.{$entity}.remap", false);
-	}
-
-	/**
-	 * Set flag that indexing is performed for the entity
-	 *
-	 * @param string $entity
-	 * @param bool $value
-	 *
-	 * @return boolean Current status
-	 */
-	public function indexingStatus($entity, $value = null)
-	{
-		if (!is_null($value)) {
-			\Settings::set("index-status.{$entity}.indexing", $value);
-		}
-
-		return \Settings::get("index-status.{$entity}.indexing", false);
 	}
 
 	/**

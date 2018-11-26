@@ -3,6 +3,7 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Stylemix\Listing\Facades\Entities;
 
 class RelationListener implements ShouldQueue
 {
@@ -26,8 +27,7 @@ class RelationListener implements ShouldQueue
 
 	public function updated(Entity $entity)
 	{
-		$relatedAttributes = EntityManager::getInstance()
-			->getEntityRelatedAttributes($entity, static::$attributeCallback);
+		$relatedAttributes = Entities::getEntityRelatedAttributes($entity, static::$attributeCallback);
 
 		foreach ($relatedAttributes as $entityClass => $attributes) {
 			/** @var \Stylemix\Listing\Attribute\Relation $attribute */
@@ -58,8 +58,7 @@ class RelationListener implements ShouldQueue
 
 	public function deleted(Entity $entity)
 	{
-		$relatedAttributes = EntityManager::getInstance()
-			->getEntityRelatedAttributes($entity, static::$attributeCallback);
+		$relatedAttributes = Entities::getEntityRelatedAttributes($entity, static::$attributeCallback);
 
 		$entityKey = $entity->getOriginal($entity->getKeyName()) ?? $entity->getKey();
 

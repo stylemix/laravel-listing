@@ -4,7 +4,7 @@ namespace Stylemix\Listing\Attribute;
 
 use Illuminate\Database\Eloquent\Builder;
 use Stylemix\Listing\Entity;
-use Stylemix\Listing\EntityManager;
+use Stylemix\Listing\Facades\Entities;
 use Stylemix\Listing\Fields\RelationField;
 
 /**
@@ -255,7 +255,7 @@ class Relation extends Base implements Filterable, Aggregateble
 	 */
 	public function getInstance()
 	{
-		return EntityManager::getInstance()->make($this->related);
+		return Entities::make($this->related);
 	}
 
 	/**
