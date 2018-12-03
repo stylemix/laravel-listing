@@ -434,29 +434,13 @@ abstract class Entity extends Model
 	public static function getAttributeDefinitions()
 	{
 		if (!isset(static::$attributeDefinitions[static::class])) {
-			$initial     = static::initialAttributeDefinitions();
 			$definitions = static::attributeDefinitions();
 
-			static::$attributeDefinitions[static::class] = (new AttributeCollection(array_merge($initial, $definitions)))
+			static::$attributeDefinitions[static::class] = (new AttributeCollection($definitions))
 				->keyBy('name');
 		}
 
 		return static::$attributeDefinitions[static::class];
-	}
-
-	/**
-	 * Initial attribute definitions for db fields
-	 *
-	 * @return array
-	 */
-	protected static function initialAttributeDefinitions(): array
-	{
-		return [
-			Id::make(),
-			Text::make('title')->useInSearch(),
-			Date::make('created_at'),
-			Date::make('updated_at'),
-		];
 	}
 
 	/**
