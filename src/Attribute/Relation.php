@@ -192,6 +192,24 @@ class Relation extends Base implements Filterable, Aggregateble
 	}
 
 	/**
+	 * @param \Stylemix\Listing\Entity $entity
+	 *
+	 * @return \Illuminate\Database\Eloquent\Collection
+	 */
+	public function getResults($entity)
+	{
+		if (!($model_id = $entity->getAttribute($this->fillableName))) {
+			return collect();
+		}
+
+		$model_id  = array_wrap($model_id);
+
+		return $this->getQueryBuilder()
+			->where($this->otherKey, $model_id)
+			->get();
+	}
+
+	/**
 	 * Whether owner entity should be updated by related entity changes for this attribute
 	 *
 	 * @param Entity $owner Owner entity model of this attribute
@@ -209,7 +227,7 @@ class Relation extends Base implements Filterable, Aggregateble
 	 *
 	 * @return Builder
 	 */
-	protected function getQueryBuilder()
+	public function getQueryBuilder()
 	{
 		$builder = $this->getInstance()->newQuery();
 
@@ -223,7 +241,7 @@ class Relation extends Base implements Filterable, Aggregateble
 	/**
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	protected function getIndexedQueryBuilder()
+	public function getIndexedQueryBuilder()
 	{
 		$builder = $this->getInstance()->search();
 

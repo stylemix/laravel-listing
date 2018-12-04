@@ -4,6 +4,7 @@ namespace Stylemix\Listing\Elastic;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Fluent;
+use Stylemix\Listing\Attribute\Base;
 
 class Builder
 {
@@ -20,6 +21,8 @@ class Builder
 	protected $facet;
 
 	protected $search;
+
+	protected $query;
 
 	protected $sort;
 
@@ -216,6 +219,10 @@ class Builder
 			$this->search($array->search);
 		}
 
+		if ($array->query) {
+			$this->query($array->query);
+		}
+
 		if ($array->where) {
 			foreach ((array) $array->where as $attribute => $criteria) {
 				$this->where($attribute, $criteria);
@@ -270,6 +277,15 @@ class Builder
 
 		if (is_array($this->source)) {
 			$body['_source'] = $this->source;
+		}
+
+		if ($this->query && count($fields = $this->getSearchFields())) {
+			$this->where[] = [
+				'query_string' => [
+					'query' => '*' . $this->query . '*',
+					'fields' => $fields,
+				],
+			];
 		}
 
 		if ($this->search && count($fields = $this->getSearchFields())) {
@@ -493,6 +509,20 @@ class Builder
 	}
 
 	/**
+	 * Add query search
+	 *
+	 * @param $keyword
+	 *
+	 * @return $this
+	 */
+	public function query($keyword)
+	{
+		$this->query = $keyword;
+
+		return $this;
+	}
+
+	/**
 	 * @param int $page
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
@@ -577,11 +607,22 @@ class Builder
 	 *
 	 * @return array
 	 */
-	protected function getSearchFields(): array
+	protected function getSearchFields() : array
 	{
 		return $this->attributes
 			->implementsSearching()
-			->pluck('name')
+			->map(function (Base $attribute) {
+				$config = new Fluent($attribute->get('search', []));
+
+				$name = $attribute->name;
+
+				if ($config->boost) {
+					$name .= '^' . $config->boost;
+				}
+
+				return $name;
+			})
+			->values()
 			->all();
 	}
 

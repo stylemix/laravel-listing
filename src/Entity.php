@@ -182,6 +182,24 @@ abstract class Entity extends Model
 	}
 
 	/**
+	 * Convert model to option object.
+	 * Usually used for dropdown options.
+	 *
+	 * @param string $primaryKey Attribute key for option value (defaults to model key)
+	 *
+	 * @return array
+	 */
+	public function toOption($primaryKey = null)
+	{
+		$primaryKey = $primaryKey ?? $this->getKeyName();
+
+		return [
+			'value' => $this->getAttribute($primaryKey),
+			'label' => $this->title,
+		];
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function getIndexName()

@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
  * @property mixed   $defaultValue Default value for attribute. Can be function that accepts current model attributes.
  * @method $this fillable() Allow attribute to be filled by forms
  * @method $this required() Make this attribute required
+ * @method $this search(array $config) Search configuration
  */
 abstract class Base extends Fluent
 {
