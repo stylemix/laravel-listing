@@ -73,7 +73,7 @@ class Builder
 		}
 
 		/** @var \Stylemix\Listing\Attribute\Filterable $definition */
-		if (!($definition = $this->attributes->filterable()->get($attribute))) {
+		if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
 			return $this;
 		}
 
@@ -108,7 +108,7 @@ class Builder
 		}
 		else {
 			/** @var \Stylemix\Listing\Attribute\Filterable $definition */
-			if (!($definition = $this->attributes->filterable()->get($attribute))) {
+			if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
 				return $this;
 			}
 
@@ -190,7 +190,7 @@ class Builder
 	 */
 	public function sort($sorts)
 	{
-		$sortables = $this->attributes->sortable();
+		$sortables = $this->attributes->implementsSortable();
 
 		foreach ($sorts as $key => $criteria) {
 			if (!$attribute = $sortables->get($key)) {
@@ -321,7 +321,7 @@ class Builder
 		}
 
 		if ($this->aggregations->isNotEmpty()) {
-			$aggregatebles = $this->attributes->aggregatable();
+			$aggregatebles = $this->attributes->implementsAggregations();
 			$aggs = collect();
 
 			foreach ($this->aggregations as $attribute => $config) {
@@ -580,8 +580,7 @@ class Builder
 	protected function getSearchFields(): array
 	{
 		return $this->attributes
-			->searchable()
-			->where('useInSearch', true)
+			->implementsSearching()
 			->pluck('name')
 			->all();
 	}

@@ -2,16 +2,32 @@
 
 namespace Stylemix\Listing;
 
-use Illuminate\Support\Collection;
 use Stylemix\Listing\Attribute\Base;
 
 class Form
 {
+
+	/**
+	 * Map of attribute types to form generator functions
+	 *
+	 * @var array
+	 */
+	protected $types = [];
+
 	protected $callback = null;
 
-	protected $modifications = [];
+	protected $extends = [];
 
-	protected $replacements = [];
+	/**
+	 * Register a fields builder function for attribute class
+	 *
+	 * @param string   $class   Attribute class
+	 * @param callable $builder Function with signature function($attribute)
+	 */
+	public function register($class, callable $builder)
+	{
+		$this->types[$class] = $builder;
+	}
 
 	/**
 	 * Add function that performs some modifications to specific field by its attribute
@@ -21,9 +37,9 @@ class Form
 	 *
 	 * @return $this
 	 */
-	public function extend($attribute, $callback)
+	public function extend($attribute, callable $callback)
 	{
-		$this->modifications[] = compact('attribute', 'callback');
+		$this->extends[] = compact('attribute', 'callback');
 
 		return $this;
 	}
@@ -35,29 +51,14 @@ class Form
 	 *
 	 * @return $this
 	 */
-	public function extendAll($callback)
+	public function extendAll(callable $callback)
 	{
 		$this->callback = $callback;
 
 		return $this;
 	}
 
-	/**
-	 * Add function that replaces specific field by its attribute
-	 *
-	 * @param string   $attribute
-	 * @param callable $callback
-	 *
-	 * @return $this
-	 */
-	public function replace($attribute, $callback)
-	{
-		$this->replacements[] = compact('attribute', 'callback');
-
-		return $this;
-	}
-
-	protected function prepare($fields, $attribute)
+	protected function prepare($fields, Base $attribute)
 	{
 		$fields = collect($fields)->keyBy('attribute');
 
@@ -67,22 +68,15 @@ class Form
 			}
 		}
 
-		foreach ($this->modifications as $modification) {
-			// No need to modify if field doesn't exists
-			if (!($field = $fields->get($modification['attribute']))) {
+		foreach ($this->extends as $extend) {
+			// No need to extend if field doesn't exists
+			if ($attribute->name != $extend['attribute']) {
 				continue;
 			}
 
-			call_user_func($modification['callback'], $field, $attribute);
-		}
-
-		foreach ($this->replacements as $replace) {
-			// No need to replace if field doesn't exists
-			if (!($field = $fields->get($replace['attribute']))) {
-				continue;
+			foreach ($fields as $key => $field) {
+				$fields[$key] = call_user_func($extend['callback'], $field, $attribute);
 			}
-
-			$fields[$replace['attribute']] = call_user_func($replace['callback'], $field, $attribute);
 		}
 
 		return $fields->all();
@@ -100,11 +94,34 @@ class Form
 		$form = collect();
 
 		$attributes->each(function (Base $attribute) use (&$form) {
-			$fields = array_wrap($attribute->formField());
+			if (!($builder = self::getBuilderForAttribute($attribute))) {
+				return;
+			}
+
+			$fields = array_wrap($builder($attribute));
 			$fields = $this->prepare($fields, $attribute);
-			$form = $form->concat($fields);
+			$form   = $form->concat($fields);
 		});
 
 		return $form->values();
+	}
+
+	/**
+	 * @param Base $attribute
+	 *
+	 * @return callable|null
+	 */
+	protected function getBuilderForAttribute($attribute)
+	{
+		// Assume that registrations of attribute types
+		// ordered from ancestor classes to descendant classes
+		// So search from end of the mappings
+		foreach (array_reverse($this->types) as $class => $builder) {
+			if ($attribute instanceof $class) {
+				return $builder;
+			}
+		}
+
+		return null;
 	}
 }

@@ -5,7 +5,6 @@ namespace Stylemix\Listing\Attribute;
 use Illuminate\Database\Eloquent\Builder;
 use Stylemix\Listing\Entity;
 use Stylemix\Listing\Facades\Entities;
-use Stylemix\Listing\Fields\RelationField;
 
 /**
  * @property string $related Related entity
@@ -95,19 +94,6 @@ class Relation extends Base implements Filterable, Aggregateble
 	public function applyCasts($casts)
 	{
 		$casts->put($this->fillableName, 'integer');
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return RelationField::make($this->fillableName)
-			->required($this->required)
-			->multiple($this->multiple)
-			->label($this->label)
-			->related($this->related)
-			->otherKey($this->otherKey);
 	}
 
 	/**

@@ -20,7 +20,7 @@ class AttributeCollection extends Collection
 	public function keyByAll()
 	{
 		return $this->merge($this->keyBy->fills())
-			->merge($this->sortable());
+			->merge($this->implementsSortable());
 	}
 
 	/**
@@ -36,9 +36,19 @@ class AttributeCollection extends Collection
 	}
 
 	/**
+	 * Get attributes that can be filled
+	 *
+	 * @return \Stylemix\Listing\AttributeCollection|Base[]
+	 */
+	public function fillable()
+	{
+		return $this->where('fillable', '=', true);
+	}
+
+	/**
 	 * @return \Stylemix\Listing\AttributeCollection|Filterable[]|Base[]
 	 */
-	public function filterable()
+	public function implementsFiltering()
 	{
 		return $this->whereInstanceOf(Filterable::class);
 	}
@@ -48,7 +58,7 @@ class AttributeCollection extends Collection
 	 *
 	 * @return \Stylemix\Listing\AttributeCollection|Aggregateble[]|Base[]
 	 */
-	public function aggregatable()
+	public function implementsAggregations()
 	{
 		return $this->whereInstanceOf(Aggregateble::class);
 	}
@@ -58,7 +68,7 @@ class AttributeCollection extends Collection
 	 *
 	 * @return \Stylemix\Listing\AttributeCollection|Sortable[]|Base[]
 	 */
-	public function sortable()
+	public function implementsSortable()
 	{
 		$result = $this->make();
 
@@ -76,7 +86,7 @@ class AttributeCollection extends Collection
 	 *
 	 * @return \Stylemix\Listing\AttributeCollection|Sortable[]|Base[]
 	 */
-	public function searchable()
+	public function implementsSearching()
 	{
 		return $this->whereInstanceOf(Searchable::class);
 	}

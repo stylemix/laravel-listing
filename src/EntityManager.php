@@ -8,6 +8,11 @@ use Stylemix\Listing\Attribute\Relation;
 
 class EntityManager extends Container
 {
+	/**
+	 * The current globally available container (if any).
+	 *
+	 * @var static
+	 */
 	protected static $instance;
 
     /**

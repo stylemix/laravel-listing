@@ -39,22 +39,4 @@ class Text extends Base implements Sortable, Searchable
 		]);
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		if ($this->multiline) {
-			return \Stylemix\Base\Fields\Textarea::make($this->fillableName)
-				->required($this->required)
-				->multiple($this->multiple)
-				->label($this->label);
-		}
-		else {
-			return \Stylemix\Base\Fields\Input::make($this->fillableName)
-				->required($this->required)
-				->multiple($this->multiple)
-				->label($this->label);
-		}
-	}
 }

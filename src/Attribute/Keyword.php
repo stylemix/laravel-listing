@@ -36,14 +36,4 @@ class Keyword extends Base implements Filterable, Sortable, Searchable
 		]);
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return \Stylemix\Base\Fields\Input::make($this->fillableName)
-			->required($this->required)
-			->multiple($this->multiple)
-			->label($this->label);
-	}
 }

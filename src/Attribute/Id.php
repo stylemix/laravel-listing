@@ -26,8 +26,4 @@ class Id extends Numeric
 		//
 	}
 
-	public function formField()
-	{
-		return null;
-	}
 }

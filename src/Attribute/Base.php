@@ -7,10 +7,12 @@ use Illuminate\Support\Str;
 
 /**
  * @property string  $label Label for attribute
+ * @property string  $placeholder Placeholder for attribute
  * @property boolean $multiple If attribute has multiple values
  * @property boolean $required Whether an attribute's field should be required
  * @property mixed   $defaultValue Default value for attribute. Can be function that accepts current model attributes.
- * @method useInSearch() Set the attribute to use in full text search
+ * @method $this fillable() Allow attribute to be filled by forms
+ * @method $this required() Make this attribute required
  */
 abstract class Base extends Fluent
 {
@@ -53,16 +55,6 @@ abstract class Base extends Fluent
 	public function applyFillable($fillable)
 	{
 		$fillable->push($this->fillableName);
-	}
-
-	/**
-	 * Adds form field to the form
-	 *
-	 * @return mixed
-	 */
-	public function formField()
-	{
-		return null;
 	}
 
 	/**

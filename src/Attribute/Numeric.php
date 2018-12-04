@@ -30,17 +30,6 @@ class Numeric extends Base implements Filterable, Sortable
 		$casts->put($this->name, $this->integer ? 'integer' : 'float');
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return \Stylemix\Base\Fields\Number::make($this->fillableName)
-			->required($this->required)
-			->multiple($this->multiple)
-			->label($this->label);
-	}
-
 	public function isValueEmpty($value)
 	{
 		return trim($value) === '';

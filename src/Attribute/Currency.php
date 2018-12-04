@@ -37,17 +37,6 @@ class Currency extends Base implements Filterable, Sortable, Aggregateble
 	}
 
 	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return Number::make($this->fillableName)
-			->min(0)
-			->multiple($this->multiple)
-			->label($this->label);
-	}
-
-	/**
 	 * Adds attribute mappings for elastic search
 	 *
 	 * @param \Illuminate\Support\Collection $mapping Mapping to modify

@@ -116,19 +116,6 @@ class Attachment extends Base
 	/**
 	 * @inheritdoc
 	 */
-	public function formField()
-	{
-		return AttachmentField::make($this->fillableName)
-			->multiple($this->multiple)
-			->required($this->required)
-			->mimeTypes($this->mimeTypes)
-			->label($this->label)
-			->mediaTag($this->name);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
 	public function applyIndexData($data, $model)
 	{
 		$items = $model->getMedia($this->name)->map(function ($media) {

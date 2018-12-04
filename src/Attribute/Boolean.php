@@ -25,13 +25,4 @@ class Boolean extends Base implements Filterable
 		$filter[$this->name] = ['term' => [$this->name => (boolean) $criteria]];
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return \Stylemix\Base\Fields\Checkbox::make($this->fillableName)
-			->required($this->required)
-			->label($this->label);
-	}
 }

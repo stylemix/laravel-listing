@@ -16,19 +16,7 @@ class Enum extends Keyword
 		$data[$this->name . '_text'] = $value ? array_get($this->source, $value) : null;
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return Select::make($this->fillableName)
-			->required($this->required)
-			->multiple($this->multiple)
-			->options($this->getSelectOptions())
-			->label($this->label);
-	}
-
-	protected function getSelectOptions()
+	public function getSelectOptions()
 	{
 		$options = collect($this->source)->map(function ($label, $value) {
 			return compact('label', 'value');

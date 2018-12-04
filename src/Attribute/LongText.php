@@ -24,16 +24,4 @@ class LongText extends Base
 		$casts->put($this->name, 'string');
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function formField()
-	{
-		return \Stylemix\Base\Fields\Textarea::make($this->fillableName)
-			->placeholder($this->placeholder)
-			->required($this->required)
-			->multiple($this->multiple)
-			->label($this->label);
-	}
-
 }
