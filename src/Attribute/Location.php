@@ -6,34 +6,42 @@ class Location extends Base implements Filterable, Sortable
 {
 
 	/**
-	 * Adds attribute mappings for elastic search
-	 *
-	 * @param \Illuminate\Support\Collection $mapping Mapping to modify
-	 *
-	 * @return void
+	 * @inheritdoc
 	 */
-	public function elasticMapping($mapping)
+	public function __construct(string $name = null)
 	{
-		$mapping[$this->name] = ['type' => 'geo_point'];
+		$name = $name ?? 'location';
+		parent::__construct($name);
 	}
 
 	/**
-	 * Apply search criteria to elastic search filter query
-	 *
-	 * @param mixed $criteria
-	 *
-	 * @param \Illuminate\Support\Collection $filter
+	 * @inheritdoc
+	 */
+	public function elasticMapping($mapping)
+	{
+		$mapping[$this->name] = [
+			'properties' => [
+				'latlng' => ['type' => 'geo_point'],
+				'address' => ['type' => 'keyword'],
+				'city' => ['type' => 'keyword'],
+				'zip' => ['type' => 'keyword'],
+				'region' => ['type' => 'keyword'],
+				'country' => ['type' => 'keyword'],
+			],
+		];
+	}
+
+	/**
+	 * @inheritdoc
 	 */
 	public function applyFilter($criteria, $filter)
 	{
-		if (isset($criteria['distance'])) {
-			$filter[$this->name] = [
-				'geo_distance' => [
-					'distance' => $criteria['distance'][0],
-					$this->name => $criteria['distance'][1],
-				],
-			];
-		}
+		$filter[$this->name] = [
+			'geo_distance' => [
+				$this->name . '.latlng' => $criteria['latlng'],
+				'distance' => $criteria['distance'],
+			],
+		];
 	}
 
 	/**
@@ -53,7 +61,7 @@ class Location extends Base implements Filterable, Sortable
 
 		$sort->put($key, [
 			'_geo_distance' => [
-				$this->name => $criteria[0],
+				$this->name . '.latlng' => $criteria[0],
 				'order' => $criteria[1],
 				'unit' => $criteria[2],
 				'mode' => 'min',

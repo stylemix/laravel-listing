@@ -7,9 +7,13 @@ use Stylemix\Listing\Entity;
 use Stylemix\Listing\Facades\Entities;
 
 /**
- * @property string $related Related entity
- * @property array  $mapProperties Properties of related entity to use in mapping
- * @property integer  $aggregationSize Limit size of returned aggregation terms
+ * @property string  $related         Related entity
+ * @property array   $mapProperties   Properties of related entity to use in mapping
+ * @property integer $aggregationSize Limit size of returned aggregation terms
+ * @property boolean $updateOnChange  Trigger reindexing on related model change
+ * @method $this mapProperties(array $map) List of mapped properties
+ * @method $this aggregationSize(int $size) Size for aggregations
+ * @method $this updateOnChange() Set whether to trigger reindexing on related model change
  */
 class Relation extends Base implements Filterable, Aggregateble
 {
@@ -24,9 +28,9 @@ class Relation extends Base implements Filterable, Aggregateble
 	public function __construct(string $name, $related = null, $foreignKey = null, $otherKey = 'id')
 	{
 		parent::__construct($name);
-		$this->related = $related ?? $name;
+		$this->related      = $related ?? $name;
 		$this->fillableName = $foreignKey ?? $name . '_id';
-		$this->otherKey = $otherKey;
+		$this->otherKey     = $otherKey;
 	}
 
 	/**
@@ -38,28 +42,25 @@ class Relation extends Base implements Filterable, Aggregateble
 			return;
 		}
 
-		if (!($model_id = $data->get($this->fillableName))) {
+		if (!($model_id = $model->getAttribute($this->fillableName))) {
 			return;
 		}
 
 		// Always retrieve data as collection
-		$model_id  = array_wrap($model_id);
-		$results   = $this->getIndexedQueryBuilder()
-			->where($this->otherKey, $model_id)
-			->get()
+		$results = $this->getResults($model)
 			->map(function (Entity $item) {
-				$item = $item->getAttributes();
-				return (object) ($this->mapProperties ? array_only($item, $this->mapProperties) : $item);
+				$item = $item->getIndexDocumentData($this->mapProperties ?: null);
+				return (object) ($item);
 			})
 			->keyBy($this->otherKey);
 
 		// Sort models by input ids
 		$array = collect();
-		foreach ($model_id as $id) {
+		foreach (array_wrap($model_id) as $id) {
 			$array[] = $results->get($id);
 		}
 
-		$array = $array->filter();
+		$array = $array->filter()->values();
 
 		// then, if not multiple, just take the first item
 		$ids = $array->pluck($this->otherKey);
@@ -159,7 +160,7 @@ class Relation extends Base implements Filterable, Aggregateble
 	{
 		$entries = [];
 
-        foreach (data_get($raw, $this->name . '.nested.available.buckets', []) as $bucket) {
+		foreach (data_get($raw, $this->name . '.nested.available.buckets', []) as $bucket) {
 			$source = data_get($bucket, 'entities.hits.hits.0._source');
 			if (empty($source)) {
 				continue;
@@ -169,9 +170,9 @@ class Relation extends Base implements Filterable, Aggregateble
 				$source,
 				['count' => $bucket['doc_count']]
 			);
-        }
+		}
 
-        $aggregations->put($this->name, $entries);
+		$aggregations->put($this->name, $entries);
 	}
 
 	/**
@@ -202,7 +203,7 @@ class Relation extends Base implements Filterable, Aggregateble
 			return collect();
 		}
 
-		$model_id  = array_wrap($model_id);
+		$model_id = array_wrap($model_id);
 
 		return $this->getQueryBuilder()
 			->where($this->otherKey, $model_id)
@@ -212,14 +213,14 @@ class Relation extends Base implements Filterable, Aggregateble
 	/**
 	 * Whether owner entity should be updated by related entity changes for this attribute
 	 *
-	 * @param Entity $owner Owner entity model of this attribute
+	 * @param Entity $owner   Owner entity model of this attribute
 	 * @param Entity $related Related entity model
 	 *
 	 * @return void|boolean
 	 */
 	public function shouldTriggerRelatedUpdate($owner, $related)
 	{
-
+		return $this->updateOnChange;
 	}
 
 	/**

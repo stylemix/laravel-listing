@@ -13,6 +13,19 @@ class AttributeCollection extends Collection
 {
 
 	/**
+	 * All key variations (name, fills, sorts)
+	 *
+	 * @return \Stylemix\Listing\AttributeCollection
+	 */
+	public function allKeys()
+	{
+		return $this->keys()
+			->merge($this->map->fills()->flatten())
+			->merge($this->map->sorts()->flatten())
+			->unique();
+	}
+
+	/**
 	 * Attributes mapped with all key variations (name, fills, sorts)
 	 *
 	 * @return \Stylemix\Listing\AttributeCollection

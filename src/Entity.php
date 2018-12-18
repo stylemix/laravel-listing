@@ -284,15 +284,22 @@ abstract class Entity extends Model
 	 * Get the data that Elasticsearch will
 	 * index for this particular document.
 	 *
+	 * @param array|null $only Index only specific attributes
+	 *
 	 * @return array
 	 */
-	public function getIndexDocumentData()
+	public function getIndexDocumentData($only = null)
 	{
+		// Take all attributes keys
+		$only = is_null($only)
+			? static::getAttributeDefinitions()->allKeys()->all()
+			: $only;
+
 		// If an attribute is a date, we will cast it to a string after converting it
 		// to a DateTime / Carbon instance. This is so we will get some consistent
 		// formatting while accessing attributes vs. arraying / JSONing a model.
 		$attributes = $this->addDateAttributesToArray(
-			$attributes = $this->getAttributes()
+			$attributes = array_only($this->getAttributes(), $only)
 		);
 
 		// Next we will handle any casts that have been setup for this model and cast
@@ -310,7 +317,9 @@ abstract class Entity extends Model
 		}
 
 		// Then allow all defined attributes to perform required actions with attributes data
-		static::getAttributeDefinitions()->each->applyIndexData($attributes = collect($attributes), $this);
+		static::getAttributeDefinitions()
+			->only($only)
+			->each->applyIndexData($attributes = collect($attributes), $this);
 
 		return $attributes->filter(function ($value) {
 			return !is_null($value);

@@ -4,6 +4,7 @@ namespace Stylemix\Listing\Attribute;
 
 /**
  * @property boolean $integer
+ * @method  $this integer() Accept only integer numbers
  */
 class Numeric extends Base implements Filterable, Sortable
 {

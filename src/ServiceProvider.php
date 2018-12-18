@@ -7,6 +7,7 @@ use Stylemix\Listing\Attribute\Attachment;
 use Stylemix\Listing\Attribute\Boolean;
 use Stylemix\Listing\Attribute\Currency;
 use Stylemix\Listing\Attribute\Date;
+use Stylemix\Listing\Attribute\Email;
 use Stylemix\Listing\Attribute\Enum;
 use Stylemix\Listing\Attribute\Id;
 use Stylemix\Listing\Attribute\Keyword;
@@ -15,6 +16,7 @@ use Stylemix\Listing\Attribute\Numeric;
 use Stylemix\Listing\Attribute\Price;
 use Stylemix\Listing\Attribute\Relation;
 use Stylemix\Listing\Attribute\Text;
+use Stylemix\Listing\Attribute\Url;
 use Stylemix\Listing\Facades\EntityForm;
 
 class ServiceProvider extends BaseProvider
@@ -77,6 +79,21 @@ class ServiceProvider extends BaseProvider
 					->multiple($attribute->multiple)
 					->label($attribute->saleLabel)
 			];
+		});
+
+		EntityForm::register(Email::class, function (Keyword $attribute) {
+			return \Stylemix\Base\Fields\Email::make($attribute->fillableName)
+				->required($attribute->required)
+				->multiple($attribute->multiple)
+				->label($attribute->label);
+		});
+
+		EntityForm::register(Url::class, function (Keyword $attribute) {
+			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
+				->typeUrl()
+				->required($attribute->required)
+				->multiple($attribute->multiple)
+				->label($attribute->label);
 		});
 
 		EntityForm::register(Keyword::class, function (Keyword $attribute) {
