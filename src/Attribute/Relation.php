@@ -206,7 +206,7 @@ class Relation extends Base implements Filterable, Aggregateble
 		$model_id = array_wrap($model_id);
 
 		return $this->getQueryBuilder()
-			->where($this->otherKey, $model_id)
+			->whereIn($this->otherKey, $model_id)
 			->get();
 	}
 
@@ -216,7 +216,7 @@ class Relation extends Base implements Filterable, Aggregateble
 	 * @param Entity $owner   Owner entity model of this attribute
 	 * @param Entity $related Related entity model
 	 *
-	 * @return void|boolean
+	 * @return null|boolean
 	 */
 	public function shouldTriggerRelatedUpdate($owner, $related)
 	{

@@ -2,7 +2,7 @@
 
 namespace Stylemix\Listing\Attribute;
 
-class LongText extends Base
+class LongText extends Base implements Searchable
 {
 	/**
 	 * Adds attribute mappings for elastic search

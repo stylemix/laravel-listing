@@ -88,17 +88,21 @@ class Builder
 	/**
 	 * Add query filter criteria
 	 *
-	 * @param string $attribute Attribute name
+	 * @param string|callable $attribute Attribute name
 	 * @param mixed  $criteria  Search criteria to apply
 	 * @param bool   $negative  Apply not negative filter (must_not)
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	public function where($attribute, $criteria, $negative = false)
+	public function where($attribute, $criteria = null, $negative = false)
 	{
 		$statements = collect();
 
-		if ($attribute == 'id') {
+		// Allow developers to push custom raw statements
+		if (is_callable($attribute)) {
+			$attribute($statements, $this);
+		}
+		elseif ($attribute == 'id') {
 			if (is_string($criteria) && strpos($criteria, ',') !== false) {
 				$criteria = explode(',', $criteria);
 			}
