@@ -3,6 +3,7 @@
 namespace Stylemix\Listing\Elastic;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Fluent;
 use Stylemix\Listing\Attribute\Base;
 
@@ -468,6 +469,44 @@ class Builder
 		return $this->setPerPage(1)
 			->get()
 			->totalHits();
+	}
+
+	/**
+	 * Find model by key or multiple keys
+	 *
+	 * @param mixed $id
+	 *
+	 * @return \Stylemix\Listing\Entity|\Stylemix\Listing\Elastic\Collection|null
+	 */
+	public function find($id)
+	{
+		$result = $this->where($this->entity->getKeyName(), $id)->get();
+
+		return is_array($id) || $id instanceof Arrayable ? $result : $result->first();
+	}
+
+	/**
+	 * Find model by key or throw an exception
+	 *
+	 * @param mixed $id
+	 *
+	 * @return \Stylemix\Listing\Entity|null
+	 */
+	public function findOrFail($id)
+	{
+		$result = $this->find($id);
+
+		if (is_array($id) || $id instanceof Arrayable) {
+			if (count($result) === count(array_unique($id))) {
+				return $result;
+			}
+		} elseif (! is_null($result)) {
+			return $result;
+		}
+
+		throw (new ModelNotFoundException)->setModel(
+			get_class($this->entity), $id
+		);
 	}
 
 	public function __call($method, $arguments)

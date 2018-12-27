@@ -37,7 +37,7 @@ abstract class EntityData extends Model
 		}
 
 		if (str_is('{*}', $value) || str_is('[*]', $value)) {
-			$value = json_decode($value);
+			$value = json_decode($value, true);
 		}
 
 		return $value;
