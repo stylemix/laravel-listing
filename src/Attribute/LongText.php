@@ -2,6 +2,8 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Searchable;
+
 class LongText extends Base implements Searchable
 {
 	/**

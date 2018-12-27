@@ -1,6 +1,6 @@
 <?php
 
-namespace Stylemix\Listing\Attribute;
+namespace Stylemix\Listing\Contracts;
 
 interface Filterable
 {

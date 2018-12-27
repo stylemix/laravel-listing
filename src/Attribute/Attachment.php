@@ -3,11 +3,12 @@
 namespace Stylemix\Listing\Attribute;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Fluent;
 use Plank\Mediable\Media;
 use Plank\Mediable\MediaUploader;
 use Psr\Http\Message\StreamInterface;
+use Stylemix\Listing\Contracts\Mutatable;
 use Stylemix\Listing\Entity;
-use Stylemix\Listing\Fields\AttachmentField;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  * @property mixed $toDirectory Directory to save
  * @property mixed $mimeTypes Strict to mime types
  */
-class Attachment extends Base
+class Attachment extends Base implements Mutatable
 {
 	protected static $syncQueue = [];
 
@@ -45,6 +46,24 @@ class Attachment extends Base
 				'size' => ['type' => 'integer'],
 			],
 		];
+	}
+
+	public function getMutator(Entity $model, $key)
+	{
+		$attributes = $model->getAttributes();
+
+		if ($key == $this->fillableName) {
+			return array_get($attributes, $key);
+		}
+
+		return array_get($attributes, $key, function () use ($model) {
+			return $this->getMedia($model);
+		});
+	}
+
+	public function setMutator(Entity $model, $key, $value)
+	{
+		return $value;
 	}
 
 	/**
@@ -118,17 +137,46 @@ class Attachment extends Base
 	 */
 	public function applyIndexData($data, $model)
 	{
+		$data[$this->name] = $this->getMedia($model);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function applyHydratingIndexData($data, $model)
+	{
+		if (!isset($data[$this->name])) {
+			return;
+		}
+
+		if ($this->multiple) {
+			$data[$this->name] = collect($data[$this->name])
+				->mapInto(Fluent::class);
+		}
+		else {
+			$data[$this->name] = new Fluent($data[$this->name]);
+		}
+	}
+
+	/**
+	 * Retrieve media for model
+	 *
+	 * @param \Stylemix\Listing\Entity $model
+	 *
+	 * @return array|mixed
+	 */
+	protected function getMedia(Entity $model)
+	{
 		$items = $model->getMedia($this->name)->map(function ($media) {
 			return $this->getMediaJson($media);
 		});
 
-		$data[$this->name] = $this->multiple ? $items->all() : $items->first();
-		//$data[$this->fillableName] = $this->multiple ? $items->pluck('id')->all() :  $items->pluck('id')->first();
+		return $this->multiple ? $items->all() : $items->first();
 	}
 
 	protected function getMediaJson($media)
 	{
-		return (object) [
+		return new Fluent([
 			'id' => $media->id,
 			'url' => $media->getUrl(),
 			'disk' => $media->disk,
@@ -137,7 +185,7 @@ class Attachment extends Base
 			'mime_type' => $media->mime_type,
 			'aggregate_type' => $media->aggregate_type,
 			'size' => $media->size,
-		];
+		]);
 	}
 
 	/**

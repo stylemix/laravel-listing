@@ -2,6 +2,9 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Sortable;
+
 class Date extends Base implements Sortable, Filterable
 {
 

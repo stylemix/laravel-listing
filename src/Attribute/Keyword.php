@@ -2,6 +2,10 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Searchable;
+use Stylemix\Listing\Contracts\Sortable;
+
 class Keyword extends Base implements Filterable, Sortable, Searchable
 {
 

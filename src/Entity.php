@@ -11,9 +11,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Plank\Mediable\Mediable;
 use Stylemix\Base\Eloquent\DateFixes;
-use Stylemix\Listing\Attribute\Date;
-use Stylemix\Listing\Attribute\Id;
-use Stylemix\Listing\Attribute\Text;
+use Stylemix\Listing\Contracts\Mutatable;
 use Stylemix\Listing\Elastic\Aggregations;
 use Stylemix\Listing\Elastic\Builder;
 use Stylemix\Listing\Elastic\Collection;
@@ -106,8 +104,12 @@ abstract class Entity extends Model
 
 		$attribute = $this->getAttributeDefinitions()->find($key);
 
+		if ($attribute instanceof Mutatable) {
+			return $attribute->getMutator($this, $key);
+		}
+
 		if ($attribute && $attribute->multiple) {
-			return $this->castMultipleAttribute($key, parent::getAttributeFromArray($key));
+			return $this->castMultipleAttribute($key, $this->getAttributeFromArray($key));
 		}
 
 		return parent::getAttribute($key);
@@ -124,7 +126,12 @@ abstract class Entity extends Model
 			return;
 		}
 
+		/** @var \Stylemix\Listing\Attribute\Base $attribute */
 		$attribute = $this->getAttributeDefinitions()->keyBy->fills()->get($key);
+
+		if ($attribute instanceof Mutatable) {
+			$value = $attribute->setMutator($this, $key, $value);
+		}
 
 		if ($attribute && $attribute->multiple) {
 			$value = collect(array_values(array_wrap($value)))->filter(function ($value) use ($attribute) {
@@ -336,7 +343,7 @@ abstract class Entity extends Model
 	 */
 	protected function castMultipleAttribute($key, $value)
 	{
-		$values = array_wrap($value);
+		$values = is_array($value) || $value instanceof \ArrayAccess ? $value : [$value];
 
 		if ($this->hasCast($key) && !$this->isJsonCastable($key)) {
 			foreach ($values as $i => $value) {

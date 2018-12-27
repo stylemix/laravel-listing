@@ -2,7 +2,9 @@
 
 namespace Stylemix\Listing\Attribute;
 
-use Stylemix\Base\Fields\Number;
+use Stylemix\Listing\Contracts\Aggregateble;
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Sortable;
 
 class Currency extends Base implements Filterable, Sortable, Aggregateble
 {

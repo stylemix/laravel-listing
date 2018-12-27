@@ -2,6 +2,9 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Searchable;
+use Stylemix\Listing\Contracts\Sortable;
+
 class Text extends Base implements Sortable, Searchable
 {
 	/**

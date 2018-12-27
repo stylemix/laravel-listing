@@ -2,6 +2,8 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Filterable;
+
 class Boolean extends Base implements Filterable
 {
 

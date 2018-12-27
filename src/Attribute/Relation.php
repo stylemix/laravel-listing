@@ -3,6 +3,9 @@
 namespace Stylemix\Listing\Attribute;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Fluent;
+use Stylemix\Listing\Contracts\Aggregateble;
+use Stylemix\Listing\Contracts\Filterable;
 use Stylemix\Listing\Entity;
 use Stylemix\Listing\Facades\Entities;
 
@@ -66,6 +69,24 @@ class Relation extends Base implements Filterable, Aggregateble
 		$ids = $array->pluck($this->otherKey);
 		$data->put($this->fillableName, $this->multiple ? $ids->all() : $ids->first());
 		$data->put($this->name, $this->multiple ? $array->all() : $array->first());
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function applyHydratingIndexData($data, $model)
+	{
+		if (!isset($data[$this->name])) {
+			return;
+		}
+
+		if ($this->multiple) {
+			$data[$this->name] = collect($data[$this->name])
+				->mapInto(Fluent::class);
+		}
+		else {
+			$data[$this->name] = new Fluent($data[$this->name]);
+		}
 	}
 
 	/**

@@ -3,11 +3,11 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Support\Collection;
-use Stylemix\Listing\Attribute\Aggregateble;
+use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Attribute\Base;
-use Stylemix\Listing\Attribute\Filterable;
-use Stylemix\Listing\Attribute\Searchable;
-use Stylemix\Listing\Attribute\Sortable;
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Searchable;
+use Stylemix\Listing\Contracts\Sortable;
 
 class AttributeCollection extends Collection
 {

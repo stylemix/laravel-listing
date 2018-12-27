@@ -2,6 +2,9 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Sortable;
+
 /**
  * @property boolean $integer
  * @method  $this integer() Accept only integer numbers

@@ -76,7 +76,7 @@ class Builder
 			return $this->where($attribute, $criteria);
 		}
 
-		/** @var \Stylemix\Listing\Attribute\Filterable $definition */
+		/** @var \Stylemix\Listing\Contracts\Filterable $definition */
 		if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
 			return $this;
 		}
@@ -115,7 +115,7 @@ class Builder
 			];
 		}
 		else {
-			/** @var \Stylemix\Listing\Attribute\Filterable $definition */
+			/** @var \Stylemix\Listing\Contracts\Filterable $definition */
 			if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
 				return $this;
 			}
@@ -346,7 +346,7 @@ class Builder
 			$aggs = collect();
 
 			foreach ($this->aggregations as $attribute => $config) {
-				/** @var \Stylemix\Listing\Attribute\Aggregateble $definition */
+				/** @var \Stylemix\Listing\Contracts\Aggregateble $definition */
 				if (!($definition = $aggregatebles->get($attribute))) {
 					continue;
 				}
