@@ -509,6 +509,22 @@ class Builder
 		);
 	}
 
+	/**
+	 * Execute the query and get the first result or throw an exception.
+	 *
+	 * @return \Stylemix\Listing\Entity|null
+	 *
+	 * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+	 */
+	public function firstOrFail()
+	{
+		if (! is_null($model = $this->first())) {
+			return $model;
+		}
+
+		throw (new ModelNotFoundException)->setModel(get_class($this->entity));
+	}
+
 	public function __call($method, $arguments)
 	{
 		return $this->get()->{$method}(...$arguments);

@@ -51,24 +51,24 @@ class Relation extends Base implements Filterable, Aggregateble
 
 		// Always retrieve data as collection
 		$results = $this->getResults($model)
+			->keyBy($this->otherKey)
 			->map(function (Entity $item) {
 				$item = $item->getIndexDocumentData($this->mapProperties ?: null);
 				return (object) ($item);
-			})
-			->keyBy($this->otherKey);
+			});
 
 		// Sort models by input ids
 		$array = collect();
 		foreach (array_wrap($model_id) as $id) {
-			$array[] = $results->get($id);
+			$array[$id] = $results->get($id);
 		}
 
-		$array = $array->filter()->values();
+		$array = $array->filter();
 
 		// then, if not multiple, just take the first item
-		$ids = $array->pluck($this->otherKey);
+		$ids = $array->keys()->values();
 		$data->put($this->fillableName, $this->multiple ? $ids->all() : $ids->first());
-		$data->put($this->name, $this->multiple ? $array->all() : $array->first());
+		$data->put($this->name, $this->multiple ? $array->values()->all() : $array->first());
 	}
 
 	/**
