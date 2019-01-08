@@ -11,6 +11,7 @@ use Stylemix\Listing\Attribute\Email;
 use Stylemix\Listing\Attribute\Enum;
 use Stylemix\Listing\Attribute\Id;
 use Stylemix\Listing\Attribute\Keyword;
+use Stylemix\Listing\Attribute\Location;
 use Stylemix\Listing\Attribute\LongText;
 use Stylemix\Listing\Attribute\Numeric;
 use Stylemix\Listing\Attribute\Price;
@@ -150,6 +151,13 @@ class ServiceProvider extends BaseProvider
 				->label($attribute->label)
 				->related($attribute->related)
 				->otherKey($attribute->getOtherKey());
+		});
+
+		EntityForm::register(Location::class, function (Location $attribute) {
+			return Fields\LocationField::make($attribute->fillableName)
+				->required($attribute->required)
+				->multiple($attribute->multiple)
+				->label($attribute->label);
 		});
 
     }
