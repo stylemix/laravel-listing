@@ -7,6 +7,7 @@ use Stylemix\Base\Fields\Base;
 /**
  * @property boolean $ajax
  * @property array   $options
+ * @property boolean $preventCasting
  */
 class RelationField extends Base
 {
@@ -68,6 +69,14 @@ class RelationField extends Base
 		}
 
 		return parent::toArray();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function sanitizeRequestInput($value)
+	{
+		return $this->preventCasting ? $value : intval($value);
 	}
 
 }
