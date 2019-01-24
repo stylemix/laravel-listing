@@ -39,13 +39,18 @@ class AttachmentField extends Base
 			return $this->getMediaJson($media);
 		});
 
-		if (!$this->multiple) {
-			$attached = $attached->first();
-		}
-
-		$this->attached = $attached;
+		$this->attached = $this->multiple ? $attached->all() : $attached->first();
 
 		return parent::resolveAttribute($resource, $attribute);
+	}
+
+	public function toArray()
+	{
+		if ($this->multiple && !is_array($this->attached)) {
+			$this->attached = [];
+		}
+
+		return parent::toArray();
 	}
 
 	protected function getMediaJson(Media $media)
