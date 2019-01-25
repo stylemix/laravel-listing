@@ -314,13 +314,15 @@ class Builder
 		}
 
 		if ($this->random) {
+			$query = array_get($body, 'query');
+
 			$body['query'] = [
 				'function_score' => [
 					'functions' => [['random_score' => (object) []]],
 				]
 			];
 
-			if ($query = array_get($body, 'query')) {
+			if ($query) {
 				$body['query']['function_score']['query'] = $query;
 			}
 		}
