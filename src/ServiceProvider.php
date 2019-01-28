@@ -127,6 +127,14 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(LongText::class, function (LongText $attribute) {
+			if ($attribute->editor) {
+				return \Stylemix\Base\Fields\Editor::make($attribute->fillableName)
+					->placeholder($attribute->placeholder)
+					->required($attribute->required)
+					->multiple($attribute->multiple)
+					->label($attribute->label);
+			}
+
 			return \Stylemix\Base\Fields\Textarea::make($attribute->fillableName)
 				->placeholder($attribute->placeholder)
 				->required($attribute->required)

@@ -4,6 +4,10 @@ namespace Stylemix\Listing\Attribute;
 
 use Stylemix\Listing\Contracts\Searchable;
 
+/**
+ * @property $editor Use editor in form
+ * @method $this editor() Use editor in form
+ */
 class LongText extends Base implements Searchable
 {
 	/**
