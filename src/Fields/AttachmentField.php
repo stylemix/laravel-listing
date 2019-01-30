@@ -50,6 +50,10 @@ class AttachmentField extends Base
 			$this->attached = [];
 		}
 
+		if (!$this->multiple && !$this->attached) {
+			$this->attached = null;
+		}
+
 		return parent::toArray();
 	}
 
