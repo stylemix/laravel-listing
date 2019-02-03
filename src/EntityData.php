@@ -3,9 +3,8 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-abstract class EntityData extends Model
+class EntityData extends Model
 {
 
 	public $timestamps = false;
@@ -20,8 +19,6 @@ abstract class EntityData extends Model
 		'name',
 		'value',
 	];
-
-	abstract public function entity() : BelongsTo;
 
 	public function setValueAttribute($value)
 	{
@@ -41,6 +38,17 @@ abstract class EntityData extends Model
 		}
 
 		return $value;
+	}
+
+	public function newInstance($attributes = [], $exists = false)
+	{
+		$instance = parent::newInstance($attributes, $exists);
+
+		// EntityData uses different tables depending on which entity it depends
+		// $this instance has correct table name and it should pass it to new instantiated model
+		$instance->setTable($this->getTable());
+
+		return $instance;
 	}
 
 }

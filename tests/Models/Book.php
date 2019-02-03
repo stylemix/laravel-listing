@@ -9,16 +9,6 @@ class Book extends Entity
 {
 
 	/**
-	 * Attributes relation
-	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
-	 */
-	public function dataAttributes(): HasMany
-	{
-		return $this->hasMany(BookData::class, 'entity_id');
-	}
-
-	/**
 	 * Attribute definitions
 	 *
 	 * @return array

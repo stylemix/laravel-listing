@@ -3,7 +3,9 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Container\Container;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Stylemix\Listing\Attribute\Relation;
 
 class EntityManager extends Container
@@ -14,6 +16,36 @@ class EntityManager extends Container
 	 * @var static
 	 */
 	protected static $instance;
+
+	/**
+	 * Create schema of data table for entity table
+	 *
+	 * @param string $base
+	 */
+	public function createDataTable($base)
+	{
+		Schema::create($base . '_data', function (Blueprint $table) use ($base) {
+			$table->increments('id');
+			$table->unsignedInteger('entity_id');
+			$table->foreign('entity_id')
+				->references('id')->on($base)
+				->onDelete('cascade')
+				->onUpdate('cascade');
+			$table->string('lang', 5)->nullable();
+			$table->string('name', 32);
+			$table->longText('value');
+		});
+	}
+
+	/**
+	 * Drop data table for entity table
+	 *
+	 * @param string $base
+	 */
+	public function dropDataTable($base)
+	{
+		Schema::dropIfExists($base . '_data');
+	}
 
     /**
      * Register an entity class

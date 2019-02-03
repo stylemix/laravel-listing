@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Stylemix\Listing\Facades\Entities;
 
 class CreateBooksTable extends Migration
 {
@@ -20,14 +21,7 @@ class CreateBooksTable extends Migration
 			$table->timestamps();
 		});
 
-		Schema::create('book_data', function (Blueprint $table) {
-			$table->increments('id');
-			$table->unsignedInteger('entity_id');
-			$table->foreign('entity_id')->references('id')->on('books')->onDelete('cascade')->onUpdate('cascade');
-			$table->string('lang', 5)->nullable();
-			$table->string('name', 32);
-			$table->longText('value');
-		});
+		Entities::createDataTable('books');
 	}
 
 	/**
@@ -37,7 +31,7 @@ class CreateBooksTable extends Migration
 	 */
 	public function down()
 	{
-		Schema::dropIfExists('book_data');
+		Entities::dropDataTable('books');
 		Schema::dropIfExists('books');
 	}
 }

@@ -2,6 +2,8 @@
 
 namespace Stylemix\Listing\Tests;
 
+use Plank\Mediable\Media;
+
 class TestCase extends \Orchestra\Testbench\TestCase
 {
 	/**
@@ -29,6 +31,9 @@ class TestCase extends \Orchestra\Testbench\TestCase
 			'database' => ':memory:',
 			'prefix'   => '',
 		]);
+
+		// Support mediable
+		$app['config']->set('mediable.model', Media::class);
 	}
 
 }

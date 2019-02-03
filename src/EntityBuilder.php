@@ -61,7 +61,7 @@ class EntityBuilder extends Builder
 				}
 
 				$attribute->value = $value;
-				$attribute->entity()->associate($this->model);
+				$attribute->entity_id = $this->model->getKey();
 
 				if (is_null($attribute->value)) {
 					$attribute->delete();

@@ -68,9 +68,16 @@ abstract class Entity extends Model
 
 	/**
 	 * Attributes relation
+	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
 	 */
-	abstract public function dataAttributes() : HasMany;
+	public function dataAttributes(): HasMany
+	{
+		$instance = new EntityData();
+		$instance->setTable($this->getTable() . '_data');
+
+		return new HasMany($instance->newQuery(), $this, $instance->getTable() . '.entity_id', $this->getKeyName());
+	}
 
 	/**
 	 * @inheritdoc

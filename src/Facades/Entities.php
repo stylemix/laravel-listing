@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Facade;
 use Stylemix\Listing\EntityManager;
 
 /**
+ * @method static createDataTable($base) Create schema for entity data table
+ * @method static dropDataTable($base) Drop entity data table
  * @method static entity($class, $name = null) Registers entity class
  * @method static \Stylemix\Listing\Entity make($entity) Creates instance of entity class
  * @method static resetIndexed($entity) Reset indexed flag for all entity records in DB

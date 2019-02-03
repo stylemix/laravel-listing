@@ -2,6 +2,7 @@
 
 namespace Stylemix\Listing;
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\ServiceProvider as BaseProvider;
 use Stylemix\Listing\Attribute\Attachment;
 use Stylemix\Listing\Attribute\Boolean;
@@ -44,6 +45,12 @@ class ServiceProvider extends BaseProvider
      */
     public function boot()
     {
+    	// Macro function for using in migration schemas
+		// that adds entity related columns
+    	Blueprint::macro('entityColumns', function () {
+			$this->timestamp('indexed_at')->nullable()->index();
+		});
+
 		EntityForm::register(Numeric::class, function (Numeric $attribute) {
 			return \Stylemix\Base\Fields\Number::make($attribute->fillableName)
 				->required($attribute->required)
