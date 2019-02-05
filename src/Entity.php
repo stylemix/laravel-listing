@@ -127,7 +127,7 @@ abstract class Entity extends Model
 	 */
 	public function setAttribute($key, $value)
 	{
-		if (in_array($key, $this->dbFields) || $this->hasSetMutator($key)) {
+		if ($this->hasSetMutator($key)) {
 			parent::setAttribute($key, $value);
 
 			return;
@@ -136,11 +136,17 @@ abstract class Entity extends Model
 		/** @var \Stylemix\Listing\Attribute\Base $attribute */
 		$attribute = $this->getAttributeDefinitions()->keyBy->fills()->get($key);
 
+		if (!$attribute) {
+			parent::setAttribute($key, $value);
+
+			return;
+		}
+
 		if ($attribute instanceof Mutatable) {
 			$value = $attribute->setMutator($this, $key, $value);
 		}
 
-		if ($attribute && $attribute->multiple) {
+		if ($attribute->multiple) {
 			$value = collect(array_values(array_wrap($value)))->filter(function ($value) use ($attribute) {
 				return !$attribute->isValueEmpty($value);
 			})->all();
