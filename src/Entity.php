@@ -39,7 +39,7 @@ abstract class Entity extends Model
 
 	protected static $resolvedMapping;
 
-	protected static $indexing = true;
+	protected static $indexingInTests = false;
 
 	public $dbFields = [
 		'id',
@@ -340,6 +340,33 @@ abstract class Entity extends Model
 		})->all();
 	}
 
+	public function getBasicEsParams($getIdIfPossible = true, $limit = null, $offset = null)
+	{
+		$params = array(
+			'index' => $this->getIndexName(),
+			'type' => $this->getTypeName(),
+		);
+
+		if ($getIdIfPossible && $this->getKey()) {
+			$params['id'] = $this->getKey();
+		}
+
+		if (is_numeric($limit)) {
+			$params['size'] = $limit;
+		}
+
+		if (is_numeric($offset)) {
+			$params['from'] = $offset;
+		}
+
+		// By default all writes to index will be synchronous
+		$params['custom'] = [
+			'refresh' => true,
+		];
+
+		return $params;
+	}
+
 	/**
 	 * Wraps value to array and casts each value in array
 	 *
@@ -584,11 +611,21 @@ abstract class Entity extends Model
 		static::observe(RelationListener::class);
 	}
 
+	/**
+	 * Enable or disable indexing to ES in testing mode
+	 *
+	 * @param bool $value
+	 */
+	public static function indexingInTests($value = true)
+	{
+		static::$indexingInTests = $value;
+	}
+
 	public static function registerPrimaryListeners()
 	{
 		static::observe(AttributeListener::class);
 
-		if (!app()->runningUnitTests()) {
+		if (!app()->runningUnitTests() || static::$indexingInTests) {
 			static::observe(IndexingListener::class);
 		}
 	}
