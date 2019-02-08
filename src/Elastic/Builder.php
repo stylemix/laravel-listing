@@ -307,7 +307,7 @@ class Builder
 			$query = array_get($body, 'query');
 			$body['query'] = [
 				'bool' => (object) array_filter([
-					'must' => $this->where->values()->merge(array_filter([$query]))->all(),
+					'filter' => $this->where->values()->merge(array_filter([$query]))->all(),
 					'must_not' => $this->whereNot->values()->all()
 				])
 			];
