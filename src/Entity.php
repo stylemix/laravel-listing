@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Plank\Mediable\Mediable;
+use Stylemix\Base\Eloquent\CastsEnums;
 use Stylemix\Base\Eloquent\DateFixes;
 use Stylemix\Listing\Contracts\Mutatable;
 use Stylemix\Listing\Elastic\Aggregations;
@@ -24,7 +25,7 @@ use Stylemix\Listing\Elastic\Collection;
  */
 abstract class Entity extends Model
 {
-	use DateFixes, ElasticquentTrait, Mediable {
+	use DateFixes, CastsEnums, ElasticquentTrait, Mediable {
 		ElasticquentTrait::newCollection insteadof Mediable;
 	}
 
