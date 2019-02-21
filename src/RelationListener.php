@@ -25,8 +25,14 @@ class RelationListener implements ShouldQueue
 		self::$attributeCallback = $attributeCallback;
 	}
 
-	public function updated(Entity $entity)
+	public function saved(Entity $entity)
 	{
+		// Recently created models has no other models
+		// related to this model
+		if ($entity->wasRecentlyCreated) {
+			return;
+		}
+
 		$relatedAttributes = Entities::getEntityRelatedAttributes($entity, static::$attributeCallback);
 
 		foreach ($relatedAttributes as $entityClass => $attributes) {
@@ -49,6 +55,7 @@ class RelationListener implements ShouldQueue
 							$model->addToIndex();
 						}
 						catch (\Exception $e) {
+							report($e);
 						}
 					}
 				});
