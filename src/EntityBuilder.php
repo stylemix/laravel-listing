@@ -44,30 +44,30 @@ class EntityBuilder extends Builder
 	{
 		list ($values, $attributes) = $this->splitAttributeValues($values);
 
-		if ($updated = parent::update($values)) {
-			foreach ($attributes as $name => $value) {
-				/** @var \Stylemix\Listing\EntityData $attribute */
-				$attribute = $this->model->dataAttributes->where('name', $name)->first();
+		$updated = parent::update($values);
 
-				if (!$attribute) {
-					if (is_null($value)) {
-						continue;
-					}
-					$this->model->dataAttributes->push(
-						$attribute = $this->model->dataAttributes()->newModelInstance([
-							'name' => $name,
-						])
-					);
+		foreach ($attributes as $name => $value) {
+			/** @var \Stylemix\Listing\EntityData $attribute */
+			$attribute = $this->model->dataAttributes->where('name', $name)->first();
+
+			if (!$attribute) {
+				if (is_null($value)) {
+					continue;
 				}
+				$this->model->dataAttributes->push(
+					$attribute = $this->model->dataAttributes()->newModelInstance([
+						'name' => $name,
+					])
+				);
+			}
 
-				$attribute->value = $value;
-				$attribute->entity_id = $this->model->getKey();
+			$attribute->value = $value;
+			$attribute->entity_id = $this->model->getKey();
 
-				if (is_null($attribute->value)) {
-					$attribute->delete();
-				} else {
-					$attribute->save();
-				}
+			if (is_null($attribute->value)) {
+				$attribute->delete();
+			} else {
+				$attribute->save();
 			}
 		}
 
