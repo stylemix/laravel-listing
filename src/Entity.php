@@ -384,7 +384,7 @@ abstract class Entity extends Model
 	 */
 	protected function castMultipleAttribute($key, $value)
 	{
-		$values = is_array($value) || $value instanceof \ArrayAccess ? $value : [$value];
+		$values = is_array($value) || $value instanceof \ArrayAccess ? $value : array_wrap($value);
 
 		if ($this->hasCast($key) && !$this->isJsonCastable($key)) {
 			foreach ($values as $i => $value) {
