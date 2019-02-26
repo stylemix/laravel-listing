@@ -592,16 +592,22 @@ abstract class Entity extends Model
 
 	/**
 	 * @param callable $callback
+	 *
+	 * @return mixed
 	 */
-	public static function withoutEvents($callback)
+	public static function withoutEvents(callable $callback)
 	{
 		$originalDispatcher = static::getEventDispatcher();
 		static::flushEventListeners();
 		static::registerPrimaryListeners();
 
-		$callback();
-
-		static::setEventDispatcher($originalDispatcher);
+		try {
+			return $callback();
+		} finally {
+			if ($originalDispatcher) {
+				static::setEventDispatcher($originalDispatcher);
+			}
+		}
 	}
 
 	/**
