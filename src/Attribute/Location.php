@@ -25,6 +25,7 @@ class Location extends Base implements Filterable, Sortable
 		$mapping[$this->name] = [
 			'properties' => [
 				'latlng' => ['type' => 'geo_point'],
+				'zoom' => ['type' => 'integer'],
 				'address' => ['type' => 'keyword'],
 				'city' => ['type' => 'keyword'],
 				'zip' => ['type' => 'keyword'],

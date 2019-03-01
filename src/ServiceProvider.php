@@ -96,16 +96,17 @@ class ServiceProvider extends BaseProvider
 				->label($attribute->label);
 		});
 
-		EntityForm::register(Url::class, function (Keyword $attribute) {
+		EntityForm::register(Keyword::class, function (Keyword $attribute) {
 			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
-				->typeUrl()
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
 		});
 
-		EntityForm::register(Keyword::class, function (Keyword $attribute) {
+		EntityForm::register(Url::class, function (Keyword $attribute) {
 			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
+				->typeUrl()
+				->rules(['url'])
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);

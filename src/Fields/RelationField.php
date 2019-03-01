@@ -14,15 +14,16 @@ class RelationField extends Base
 
 	public $component = 'relation-field';
 
+	protected $defaults = [
+		'options' => [],
+		'ajax' => true,
+		'source' => null,
+		'preload' => null,
+		'queryParam' => null,
+	];
+
 	/** @var \Stylemix\Listing\Attribute\Relation */
 	protected $attributeInstance;
-
-	public function __construct(string $attribute)
-	{
-		parent::__construct($attribute);
-
-		$this->ajax = true;
-	}
 
 	/**
 	 * @param \Stylemix\Listing\Attribute\Relation $attributeInstance
