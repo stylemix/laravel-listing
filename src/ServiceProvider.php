@@ -19,6 +19,8 @@ use Stylemix\Listing\Attribute\Price;
 use Stylemix\Listing\Attribute\Relation;
 use Stylemix\Listing\Attribute\Text;
 use Stylemix\Listing\Attribute\Url;
+use Stylemix\Listing\Console\EntitiesIndexCommand;
+use Stylemix\Listing\Console\EntitiesInitCommand;
 use Stylemix\Listing\Facades\EntityForm;
 
 class ServiceProvider extends BaseProvider
@@ -50,6 +52,13 @@ class ServiceProvider extends BaseProvider
     	Blueprint::macro('entityColumns', function () {
 			$this->timestamp('indexed_at')->nullable()->index();
 		});
+
+		if ($this->app->runningInConsole()) {
+			$this->commands([
+				EntitiesInitCommand::class,
+				EntitiesIndexCommand::class,
+			]);
+		}
 
 		EntityForm::register(Numeric::class, function (Numeric $attribute) {
 			return \Stylemix\Base\Fields\Number::make($attribute->fillableName)
