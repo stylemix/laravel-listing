@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Stylemix\Listing\Attribute\Relation;
 
 class EntityManager extends Container
@@ -55,7 +56,7 @@ class EntityManager extends Container
      */
 	public function entity($class, $name = null)
 	{
-		$name = $name ?? snake_case(class_basename($class));
+		$name = $name ?? Str::snake(class_basename($class));
 		$this->bind($name, $class);
 	}
 

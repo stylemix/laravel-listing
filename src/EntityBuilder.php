@@ -3,19 +3,21 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 
+/**
+ * @property \Stylemix\Listing\Entity $model
+ */
 class EntityBuilder extends Builder
 {
 
 	/**
-	 * @var \Stylemix\Listing\Entity
+	 * Stores resolved (sql) database fields for each entity model
+	 *
+	 * @var array
 	 */
-	protected $model;
-
-	public function insert(array $values)
-	{
-		return parent::insert($values);
-	}
+	protected static $resolvedDbFields = [];
 
 	public function insertGetId(array $values, $sequence = null)
 	{
@@ -91,10 +93,30 @@ class EntityBuilder extends Builder
 
 	protected function splitAttributeValues(array $values)
 	{
-		$attributes = array_except($values, $this->model->dbFields);
-		$values = array_only($values, $this->model->dbFields);
+		$attributes = Arr::except($values, $this->getDbFields($this->model));
+		$values = Arr::only($values, $this->getDbFields($this->model));
 
 		return [$values, $attributes];
+	}
+
+	/**
+	 * Get database fields for model
+	 *
+	 * @param \Illuminate\Database\Eloquent\Model $model
+	 *
+	 * @return array
+	 */
+	protected function getDbFields($model)
+	{
+		$class = get_class($model);
+
+		if (isset(static::$resolvedDbFields[$class])) {
+			return static::$resolvedDbFields[$class];
+		}
+
+		static::$resolvedDbFields[$class] = $fields = Schema::getColumnListing($model->getTable());
+
+		return $fields;
 	}
 
 }

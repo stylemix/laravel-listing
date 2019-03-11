@@ -8,6 +8,7 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Plank\Mediable\Mediable;
 use Stylemix\Base\Eloquent\CastsEnums;
@@ -41,13 +42,6 @@ abstract class Entity extends Model
 	protected static $resolvedMapping;
 
 	protected static $indexingInTests = false;
-
-	public $dbFields = [
-		'id',
-		'title',
-		'created_at',
-		'updated_at',
-	];
 
 	protected $dateFormat = 'Y-m-d\TH:i:s';
 
@@ -106,7 +100,7 @@ abstract class Entity extends Model
 	 */
 	public function getAttribute($key)
 	{
-		if (in_array($key, $this->dbFields) || $this->hasGetMutator($key) || method_exists($this, $key)) {
+		if ($this->hasGetMutator($key) || method_exists(self::class, $key)) {
 			return parent::getAttribute($key);
 		}
 
@@ -148,7 +142,7 @@ abstract class Entity extends Model
 		}
 
 		if ($attribute->multiple) {
-			$value = collect(array_values(array_wrap($value)))->filter(function ($value) use ($attribute) {
+			$value = collect(array_values(Arr::wrap($value)))->filter(function ($value) use ($attribute) {
 				return !$attribute->isValueEmpty($value);
 			})->all();
 
