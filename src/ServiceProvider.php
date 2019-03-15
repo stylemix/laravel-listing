@@ -170,7 +170,7 @@ class ServiceProvider extends BaseProvider
 
 		EntityForm::register(Relation::class, function (Relation $attribute) {
 			return Fields\RelationField::make($attribute->fillableName)
-				->attributeInstance($attribute)
+				->setQuery($attribute->getQueryBuilder())
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label)

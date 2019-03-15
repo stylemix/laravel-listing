@@ -6,7 +6,13 @@ use Stylemix\Base\Fields\Base;
 
 /**
  * @property boolean $ajax
+ * @method $this ajax(bool $value)
  * @property array   $options
+ * @method $this options(array $options)
+ * @property array   $source
+ * @property array   $queryParam
+ * @property string  $otherKey
+ * @property boolean $preload
  * @property boolean $preventCasting
  */
 class RelationField extends Base
@@ -18,46 +24,25 @@ class RelationField extends Base
 		'options' => [],
 		'ajax' => true,
 		'source' => null,
+		'otherKey' => 'id',
 		'preload' => null,
 		'queryParam' => null,
 	];
 
-	/** @var \Stylemix\Listing\Attribute\Relation */
-	protected $attributeInstance;
+	/** @var \Illuminate\Database\Eloquent\Builder */
+	protected $query;
 
-	/**
-	 * @param \Stylemix\Listing\Attribute\Relation $attributeInstance
-	 *
-	 * @return RelationField
-	 */
-	public function attributeInstance($attributeInstance)
-	{
-		$this->attributeInstance = $attributeInstance;
-
-		return $this;
-	}
-
-	public function resolve($resource, $attribute = null)
-	{
-		if ($this->ajax) {
-			$results = $this->attributeInstance->getResults($resource);
-
-			$this->options = $results->map(function ($model) {
-				return (object) $model->toOption($this->attributeInstance->getOtherKey());
-			});
-		}
-
-		parent::resolve($resource, $attribute);
-	}
+	/** @var callable */
+	protected $optionsCallback = null;
 
 	public function toArray()
 	{
-		if (!$this->ajax) {
-			$results = $this->attributeInstance->getQueryBuilder()->get();
+		if ($this->ajax && $this->query && empty($this->options) && $this->value) {
+			$this->options = $this->getOptionsFromQuery($this->value);
+		}
 
-			$this->options = $results->map(function ($model) {
-				return (object) $model->toOption($this->attributeInstance->getOtherKey());
-			});
+		if (!$this->ajax && $this->query && empty($this->options)) {
+			$this->options = $this->getOptionsFromQuery();
 		}
 		else {
 			$this->source = [
@@ -73,11 +58,65 @@ class RelationField extends Base
 	}
 
 	/**
+	 * Set eloquent query builder for options
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 *
+	 * @return RelationField
+	 */
+	public function setQuery(\Illuminate\Database\Eloquent\Builder $query) : RelationField
+	{
+		$this->query = $query;
+
+		return $this;
+	}
+
+	/**
+	 * Set callback for resolving options
+	 *
+	 * @param callable $optionsCallback
+	 *
+	 * @return $this
+	 */
+	public function optionsCallback(callable $optionsCallback)
+	{
+		$this->optionsCallback = $optionsCallback;
+
+		return $this;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	protected function sanitizeRequestInput($value)
 	{
 		return $this->preventCasting ? $value : intval($value);
+	}
+
+	/**
+	 * Get options from query. If value is provided, take the options for this value only
+	 *
+	 * @param mixed $value
+	 *
+	 * @return array
+	 */
+	protected function getOptionsFromQuery($value = null)
+	{
+		$results = $this->query
+			->when($value, function ($builder, $value) {
+				$builder->where($this->otherKey, $value);
+			})
+			->get();
+
+		$options = $results->map(function ($model) {
+			return (object) $model->toOption($this->otherKey);
+		});
+
+		if (is_callable($this->optionsCallback)) {
+			$options = call_user_func($this->optionsCallback, $options, $this);
+		}
+
+		return $options;
 	}
 
 }
