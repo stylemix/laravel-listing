@@ -129,7 +129,7 @@ abstract class Entity extends Model
 		}
 
 		/** @var \Stylemix\Listing\Attribute\Base $attribute */
-		$attribute = $this->getAttributeDefinitions()->keyBy->fills()->get($key);
+		$attribute = $this->getAttributeDefinitions()->keyByFills()->get($key);
 
 		if (!$attribute) {
 			parent::setAttribute($key, $value);

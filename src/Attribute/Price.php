@@ -26,6 +26,14 @@ class Price extends Currency
 		$fillable->push($this->saleName);
 	}
 
+	/**
+	 * @inheritdoc
+	 */
+	public function fills()
+	{
+		return [$this->fillableName, $this->saleName];
+	}
+
 	public function applyCasts($casts)
 	{
 		parent::applyCasts($casts);
@@ -35,9 +43,15 @@ class Price extends Currency
 	public function elasticMapping($mapping)
 	{
 		parent::elasticMapping($mapping);
+
 		$mapping[$this->saleName] = [
 			'type' => 'scaled_float',
-			"scaling_factor" => 100
+			'scaling_factor' => 2
+		];
+
+		$mapping[$this->finalName] = [
+			'type' => 'scaled_float',
+			'scaling_factor' => 2
 		];
 	}
 

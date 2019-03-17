@@ -2,6 +2,7 @@
 
 namespace Stylemix\Listing;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Attribute\Base;
@@ -26,13 +27,32 @@ class AttributeCollection extends Collection
 	}
 
 	/**
+	 * Get attributes keyed by fills
+	 *
+	 * @return \Stylemix\Listing\AttributeCollection
+	 */
+	public function keyByFills()
+	{
+		$byFills = new static();
+
+		$this->each(function (Base $attribute) use ($byFills) {
+			foreach (Arr::wrap($attribute->fills()) as $key) {
+				$byFills->put($key, $attribute);
+			}
+		});
+
+		return $byFills;
+	}
+
+	/**
 	 * Attributes mapped with all key variations (name, fills, sorts)
 	 *
 	 * @return \Stylemix\Listing\AttributeCollection
 	 */
 	public function keyByAll()
 	{
-		return $this->merge($this->keyBy->fills())
+		return $this
+			->merge($this->keyByFills())
 			->merge($this->implementsSortable());
 	}
 
