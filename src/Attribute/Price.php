@@ -16,6 +16,7 @@ class Price extends Currency
 		parent::__construct($name);
 		$this->saleName        = $saleName ?? $this->name . '_sale';
 		$this->finalName       = $this->name . '_final';
+		$this->filterField     = $this->finalName;
 		$this->aggregatedField = $this->finalName;
 		$this->saleLabel       = $this->getSaleLabel();
 	}

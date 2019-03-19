@@ -14,17 +14,26 @@ trait AppliesNumericQuery
 	 */
 	public function applyFilter($criteria, $filter)
 	{
+		$filterField = $this->filterField ?? $this->name;
+
 		if (is_array($criteria) && Arr::isAssoc($criteria)) {
-			$range = array_filter((array) $criteria + ['gt' => null, 'gte' => null, 'lt' => null, 'lte' => null]);
+			$range = array_filter(
+				(array) $criteria + ['gt' => null, 'gte' => null, 'lt' => null, 'lte' => null],
+				function ($value) {
+					return $value !== null;
+				}
+			);
 
 			if (count($range)) {
-				$filter[$this->name] = ['range' => [$this->name => $range]];
+				$range = array_map($this->integer ? 'intval' : 'floatval', $range);
+				$filter[$this->name] = ['range' => [$filterField => $range]];
 			}
 
 			return;
 		}
 
-		$filter[$this->name] = ['terms' => [$this->name => array_wrap($criteria)]];
+		$criteria = array_map($this->integer ? 'intval' : 'floatval', array_wrap($criteria));
+		$filter[$this->name] = ['terms' => [$filterField => $criteria]];
 	}
 
 }
