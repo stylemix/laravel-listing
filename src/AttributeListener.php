@@ -14,9 +14,11 @@ class AttributeListener
 		$defaults = $definitions
 			->diffKeys($attributes)
 			->map->applyDefaultValue($attributes, $model)
-			->filter();
+			->filter(function ($value) {
+				return $value !== null;
+			});
 
-		$attributes = $attributes->merge($defaults->filter());
+		$attributes = $attributes->merge($defaults);
 
 		// Pipe definitions through saving method
 		$definitions->each->saving($attributes, $model);
