@@ -609,12 +609,18 @@ abstract class Entity extends Model
 	 */
 	protected static function boot()
 	{
-		parent::boot();
-
-		static::resolveMappingProperties();
+		// Method boot calls bootTraits that may bind event listeners to the model
+		// Binding listeners creates new instance of the model
+		// which requires all fillable and casts to be resolved
 		static::resolveFillable();
 		static::resolveCasts();
+		static::resolveMappingProperties();
+
+		parent::boot();
+
+		// Primary listeners: attributes to data storing and ES indexing
 		static::registerPrimaryListeners();
+
 		static::observe(RelationListener::class);
 	}
 
