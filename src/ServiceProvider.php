@@ -21,6 +21,7 @@ use Stylemix\Listing\Attribute\Text;
 use Stylemix\Listing\Attribute\Url;
 use Stylemix\Listing\Console\EntitiesIndexCommand;
 use Stylemix\Listing\Console\EntitiesInitCommand;
+use Stylemix\Listing\Console\GenerateEntityCommand;
 use Stylemix\Listing\Facades\EntityForm;
 
 class ServiceProvider extends BaseProvider
@@ -40,6 +41,8 @@ class ServiceProvider extends BaseProvider
         $this->app->singleton(Form::class, function ($app) {
             return new Form();
         });
+
+        $this->mergeConfigFrom(__DIR__ . '/../config/generator_stubs.php', 'generator_stubs');
     }
 
     /**
@@ -57,6 +60,7 @@ class ServiceProvider extends BaseProvider
 			$this->commands([
 				EntitiesInitCommand::class,
 				EntitiesIndexCommand::class,
+				GenerateEntityCommand::class,
 			]);
 		}
 
