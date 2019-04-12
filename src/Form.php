@@ -14,6 +14,8 @@ class Form
 	 */
 	protected $types = [];
 
+	protected $byName = [];
+
 	protected $callback = null;
 
 	protected $extends = [];
@@ -27,6 +29,17 @@ class Form
 	public function register($class, callable $builder)
 	{
 		$this->types[$class] = $builder;
+	}
+
+	/**
+	 * Register a fields builder function by attribute name.
+	 *
+	 * @param string   $name   Attribute name
+	 * @param callable $builder Function with signature function($attribute)
+	 */
+	public function registerByName($name, callable $builder)
+	{
+		$this->byName[$name] = $builder;
 	}
 
 	/**
@@ -94,7 +107,7 @@ class Form
 		$form = collect();
 
 		$attributes->each(function (Base $attribute) use (&$form) {
-			if (!($builder = self::getBuilderForAttribute($attribute))) {
+			if (!($builder = $this->getBuilderForAttribute($attribute))) {
 				return;
 			}
 
@@ -113,6 +126,10 @@ class Form
 	 */
 	protected function getBuilderForAttribute($attribute)
 	{
+		if (isset($this->byName[$attribute->name])) {
+			return $this->byName[$attribute->name];
+		}
+
 		// Assume that registrations of attribute types
 		// ordered from ancestor classes to descendant classes
 		// So search from end of the mappings
