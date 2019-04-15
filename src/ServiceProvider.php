@@ -164,7 +164,7 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Attachment::class, function (Attachment $attribute) {
-			return Fields\AttachmentField::make($attribute->fillableName)
+			return \Stylemix\Base\ExtraFields\AttachmentField::make($attribute->fillableName)
 				->multiple($attribute->multiple)
 				->required($attribute->required)
 				->mimeTypes($attribute->mimeTypes)
@@ -173,7 +173,7 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Relation::class, function (Relation $attribute) {
-			return Fields\RelationField::make($attribute->fillableName)
+			return \Stylemix\Base\ExtraFields\RelationField::make($attribute->fillableName)
 				->setQuery($attribute->getQueryBuilder())
 				->required($attribute->required)
 				->multiple($attribute->multiple)
@@ -183,7 +183,7 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Location::class, function (Location $attribute) {
-			return Fields\LocationField::make($attribute->fillableName)
+			return \Stylemix\Base\ExtraFields\LocationField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
