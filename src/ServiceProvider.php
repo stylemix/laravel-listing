@@ -65,7 +65,7 @@ class ServiceProvider extends BaseProvider
 		}
 
 		EntityForm::register(Numeric::class, function (Numeric $attribute) {
-			return \Stylemix\Base\Fields\Number::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
@@ -76,13 +76,13 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Boolean::class, function (Boolean $attribute) {
-			return \Stylemix\Base\Fields\Checkbox::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\CheckboxField::make($attribute->fillableName)
 				->required($attribute->required)
 				->label($attribute->label);
 		});
 
 		EntityForm::register(Currency::class, function (Currency $attribute) {
-			return \Stylemix\Base\Fields\Number::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
 				->min(0)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
@@ -90,11 +90,11 @@ class ServiceProvider extends BaseProvider
 
 		EntityForm::register(Price::class, function (Price $attribute) {
 			return [
-				\Stylemix\Base\Fields\Number::make($attribute->fillableName)
+				\Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
 					->min(0)
 					->multiple($attribute->multiple)
 					->label($attribute->label),
-				\Stylemix\Base\Fields\Number::make($attribute->saleName)
+				\Stylemix\Base\Fields\NumberField::make($attribute->saleName)
 					->rules('nullable')
 					->min(0)
 					->multiple($attribute->multiple)
@@ -103,21 +103,21 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Email::class, function (Keyword $attribute) {
-			return \Stylemix\Base\Fields\Email::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\EmailField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
 		});
 
 		EntityForm::register(Keyword::class, function (Keyword $attribute) {
-			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\TextField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
 		});
 
 		EntityForm::register(Url::class, function (Keyword $attribute) {
-			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\TextField::make($attribute->fillableName)
 				->typeUrl()
 				->rules(['url'])
 				->required($attribute->required)
@@ -126,14 +126,14 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Date::class, function (Date $attribute) {
-			return \Stylemix\Base\Fields\Datetime::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\DatetimeField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
 		});
 
 		EntityForm::register(Enum::class, function (Enum $attribute) {
-			return \Stylemix\Base\Fields\Select::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\SelectField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->options($attribute->getSelectOptions())
@@ -141,7 +141,7 @@ class ServiceProvider extends BaseProvider
 		});
 
 		EntityForm::register(Text::class, function (Text $attribute) {
-			return \Stylemix\Base\Fields\Input::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\TextField::make($attribute->fillableName)
 				->required($attribute->required)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
@@ -149,14 +149,14 @@ class ServiceProvider extends BaseProvider
 
 		EntityForm::register(LongText::class, function (LongText $attribute) {
 			if ($attribute->editor) {
-				return \Stylemix\Base\Fields\Editor::make($attribute->fillableName)
+				return \Stylemix\Base\Fields\EditorField::make($attribute->fillableName)
 					->placeholder($attribute->placeholder)
 					->required($attribute->required)
 					->multiple($attribute->multiple)
 					->label($attribute->label);
 			}
 
-			return \Stylemix\Base\Fields\Textarea::make($attribute->fillableName)
+			return \Stylemix\Base\Fields\TextareaField::make($attribute->fillableName)
 				->placeholder($attribute->placeholder)
 				->required($attribute->required)
 				->multiple($attribute->multiple)

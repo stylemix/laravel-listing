@@ -2,8 +2,6 @@
 
 namespace Stylemix\Listing\Attribute;
 
-use Stylemix\Base\Fields\Select;
-
 /**
  * @property mixed $source Enum keywords source
  */
