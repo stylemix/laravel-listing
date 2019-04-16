@@ -4,6 +4,7 @@ namespace Stylemix\Listing;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\ServiceProvider as BaseProvider;
+use Stylemix\Generators\Commands\CrudCommand;
 use Stylemix\Listing\Attribute\Attachment;
 use Stylemix\Listing\Attribute\Boolean;
 use Stylemix\Listing\Attribute\Currency;
@@ -60,8 +61,13 @@ class ServiceProvider extends BaseProvider
 			$this->commands([
 				EntitiesInitCommand::class,
 				EntitiesIndexCommand::class,
-				GenerateEntityCommand::class,
 			]);
+
+			// Generators package may only be installed on dev mode
+			// Check for class existence to register the command
+			if (class_exists(CrudCommand::class)) {
+				$this->commands(GenerateEntityCommand::class);
+			}
 		}
 
 		EntityForm::register(Numeric::class, function (Numeric $attribute) {
