@@ -425,15 +425,16 @@ class Builder
 	 *
 	 * @param int $size
 	 * @param callable $callback
+	 * @param array $params
 	 *
 	 * @return bool
 	 */
-	public function chunk($size, $callback)
+	public function chunk($size, $callback, $params = [])
 	{
 		$page = 1;
-		$results = $this->setPerPage($size)->get([
+		$results = $this->setPerPage($size)->get(array_merge([
 			'scroll' => '1m',
-		]);
+		], $params));
 
 		if (!$results->count()) {
 			return true;
