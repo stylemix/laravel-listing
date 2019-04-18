@@ -8,6 +8,7 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Plank\Mediable\Mediable;
@@ -592,7 +593,7 @@ abstract class Entity extends Model
 	public static function withoutEvents(callable $callback)
 	{
 		$originalDispatcher = static::getEventDispatcher();
-		static::flushEventListeners();
+		static::setEventDispatcher(new Dispatcher());
 		static::registerPrimaryListeners();
 
 		try {

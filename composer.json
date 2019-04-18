@@ -7,13 +7,21 @@
             "email": "azamat.holmeer@gmail.com"
         }
     ],
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/stylemix/laravel-base.git"
+		}
+	],
     "require": {
         "php": ">=7.0.0",
         "elasticquent/elasticquent": "dev-master",
         "plank/laravel-mediable": "^2.8"
     },
     "require-dev": {
-      "orchestra/testbench": "^3.6"
+      "orchestra/testbench": "^3.6",
+        "mockery/mockery": "^1.2",
+        "stylemix/laravel-base": "dev-dev"
     },
     "autoload": {
         "psr-4": {
