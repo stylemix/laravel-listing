@@ -43,6 +43,9 @@ class Builder
 	/** @var array Source filtering */
 	protected $source;
 
+	/** @var callable Callback for request body */
+	protected $buildWith;
+
 	private $sortMap = [];
 
 	/**
@@ -359,6 +362,10 @@ class Builder
 			$body['aggs'] = $aggs->all();
 		}
 
+		if (is_callable($buildWith = $this->buildWith)) {
+			$body = $buildWith($body);
+		}
+
 		return $body;
 	}
 
@@ -660,6 +667,20 @@ class Builder
 	public function setRequest(array $request)
 	{
 		$this->request = $request;
+
+		return $this;
+	}
+
+	/**
+	 * Set callback to process a request body after build
+	 *
+	 * @param callable $buildWith
+	 *
+	 * @return $this
+	 */
+	public function buildWith(callable $buildWith)
+	{
+		$this->buildWith = $buildWith;
 
 		return $this;
 	}
