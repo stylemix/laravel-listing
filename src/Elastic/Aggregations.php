@@ -9,7 +9,7 @@ class Aggregations extends Collection
 {
 	public static function build(Entity $entity, array $raw)
 	{
-		$collection = self::make();
+		$collection = self::make($raw);
 
 		foreach ($entity::getAttributeDefinitions() as $attribute) {
 			$attribute->collectAggregations($collection, $raw);
