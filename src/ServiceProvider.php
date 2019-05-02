@@ -89,6 +89,7 @@ class ServiceProvider extends BaseProvider
 
 		EntityForm::register(Currency::class, function (Currency $attribute) {
 			return \Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
+				->required($attribute->required)
 				->min(0)
 				->multiple($attribute->multiple)
 				->label($attribute->label);
@@ -97,6 +98,7 @@ class ServiceProvider extends BaseProvider
 		EntityForm::register(Price::class, function (Price $attribute) {
 			return [
 				\Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
+					->required($attribute->required)
 					->min(0)
 					->multiple($attribute->multiple)
 					->label($attribute->label),
