@@ -244,6 +244,8 @@ abstract class Entity extends Model
 		}
 
 		$params = $this->getBasicEsParams();
+		// By default all writes to index will be synchronous
+		$params['custom'] = ['refresh' => true];
 
 		// Get our document body data.
 		$params['body'] = $indexDocumentData = $this->getIndexDocumentData();
@@ -274,14 +276,35 @@ abstract class Entity extends Model
 	}
 
 	/**
+	 * Partial Update to Indexed Document
+	 *
+	 * @return array
+	 */
+	public function updateIndex()
+	{
+		$params = $this->getBasicEsParams();
+		// By default all writes to index will be synchronous
+		$params['custom'] = ['refresh' => true];
+
+		// Get our document body data.
+		$params['body']['doc'] = $this->getIndexDocumentData();
+
+		return $this->getElasticSearchClient()->update($params);
+	}
+
+	/**
 	 * Remove From Search Index
 	 *
 	 * @return array
 	 */
 	public function removeFromIndex()
 	{
+		$params = $this->getBasicEsParams();
+		// By default all writes to index will be synchronous
+		$params['custom'] = ['refresh' => true];
+
 		try {
-			$result = $this->getElasticSearchClient()->delete($this->getBasicEsParams());
+			$result = $this->getElasticSearchClient()->delete($params);
 		}
 		catch (Missing404Exception $e) {
 			// That will mean the document was not found in index
@@ -360,11 +383,6 @@ abstract class Entity extends Model
 		if (is_numeric($offset)) {
 			$params['from'] = $offset;
 		}
-
-		// By default all writes to index will be synchronous
-		$params['custom'] = [
-			'refresh' => true,
-		];
 
 		return $params;
 	}
