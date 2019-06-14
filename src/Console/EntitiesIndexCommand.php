@@ -64,7 +64,7 @@ class EntitiesIndexCommand extends Command
 		$failed  = 0;
 		$bar     = $this->getOutput()->createProgressBar($total);
 
-		$builder->chunk(100, function ($results) use ($bar, &$failed) {
+		$builder->chunkById(100, function ($results) use ($bar, &$failed) {
 			$results->each(function (\Stylemix\Listing\Entity $model) use ($bar, &$failed) {
 				$model->removeFromIndex();
 
