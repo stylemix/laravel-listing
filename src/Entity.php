@@ -5,6 +5,7 @@ namespace Stylemix\Listing;
 use Carbon\Carbon;
 use Elasticquent\ElasticquentTrait;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
+use Illuminate\Contracts\Queue\Factory as QueueFactoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -611,7 +612,12 @@ abstract class Entity extends Model
 	public static function withoutEvents(callable $callback)
 	{
 		$originalDispatcher = static::getEventDispatcher();
-		static::setEventDispatcher(new Dispatcher());
+		$app = app();
+		static::setEventDispatcher(
+			(new Dispatcher($app))->setQueueResolver(function () use ($app) {
+				return $app->make(QueueFactoryContract::class);
+			})
+		);
 		static::registerPrimaryListeners();
 
 		try {
