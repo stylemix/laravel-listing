@@ -2,7 +2,7 @@
 
 namespace Stylemix\Listing\Tests\Unit;
 
-use Stylemix\Listing\Tests\Models\Book;
+use Stylemix\Listing\Tests\Models\DummyBook;
 use Stylemix\Listing\Tests\TestCase;
 
 class EntityTest extends TestCase
@@ -12,7 +12,7 @@ class EntityTest extends TestCase
 	{
 		$this->assertCount(2, $this->getListeners());
 
-		Book::withoutEvents(function () {
+		DummyBook::withoutEvents(function () {
 			$this->assertCount(1, $this->getListeners());
 		});
 
@@ -22,11 +22,11 @@ class EntityTest extends TestCase
 	protected function getListeners() : array
 	{
 		// Initiate model boot
-		new Book();
+		new DummyBook();
 
 		/** @var \Illuminate\Events\Dispatcher $events */
-		$events    = Book::getEventDispatcher();
-		$listeners = $events->getListeners('eloquent.saved: ' . Book::class);
+		$events    = DummyBook::getEventDispatcher();
+		$listeners = $events->getListeners('eloquent.saved: ' . DummyBook::class);
 
 		return $listeners;
 	}

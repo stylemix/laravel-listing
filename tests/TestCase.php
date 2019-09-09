@@ -3,6 +3,9 @@
 namespace Stylemix\Listing\Tests;
 
 use Plank\Mediable\Media;
+use Stylemix\Listing\Facades\Entities;
+use Stylemix\Listing\ServiceProvider;
+use Stylemix\Listing\Tests\Models\DummyBook;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
@@ -14,8 +17,14 @@ class TestCase extends \Orchestra\Testbench\TestCase
 		parent::setUp();
 
 		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+		$this->withFactories(__DIR__ . '/database/factories');
+		Entities::entity(DummyBook::class, 'book');
 	}
 
+	protected function getPackageProviders($app)
+	{
+		return [ServiceProvider::class];
+	}
 	/**
 	 * Define environment setup.
 	 *
@@ -30,6 +39,14 @@ class TestCase extends \Orchestra\Testbench\TestCase
 			'driver'   => 'sqlite',
 			'database' => ':memory:',
 			'prefix'   => '',
+		]);
+		$app['config']->set('elasticquent', [
+			'config' => [
+				'hosts' => [
+					env('ELASTICSEARCH_HOST', 'localhost:9200'),
+				],
+				'retries' => 1,
+			],
 		]);
 
 		// Support mediable

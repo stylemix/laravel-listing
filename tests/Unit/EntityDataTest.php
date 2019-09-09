@@ -2,7 +2,7 @@
 
 namespace Stylemix\Listing\Tests\Unit;
 
-use Stylemix\Listing\Tests\Models\Book;
+use Stylemix\Listing\Tests\Models\DummyBook;
 use Stylemix\Listing\Tests\TestCase;
 
 class EntityDataTest extends TestCase
@@ -15,7 +15,7 @@ class EntityDataTest extends TestCase
      */
     public function testDataAttributeSaved()
     {
-        $book = new Book();
+        $book = new DummyBook();
         $book->forceFill([
 			'title' => 'Title',
 			'extra' => 'Extra',
@@ -30,7 +30,7 @@ class EntityDataTest extends TestCase
 
 	public function testDataHydrated()
 	{
-		$book = new Book();
+		$book = new DummyBook();
 		$book->forceFill([
 			'title' => 'Title',
 			'extra' => 'Extra',
@@ -43,7 +43,7 @@ class EntityDataTest extends TestCase
 
 	public function testDataUpdated()
 	{
-		$book = Book::forceCreate([
+		$book = DummyBook::forceCreate([
 			'title' => 'Title',
 			'extra' => 'Extra',
 		]);

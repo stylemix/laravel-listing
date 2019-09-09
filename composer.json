@@ -16,7 +16,8 @@
     "require": {
         "php": ">=7.0.0",
         "elasticquent/elasticquent": "dev-master",
-        "plank/laravel-mediable": "^2.8"
+        "plank/laravel-mediable": "^2.8",
+        "konekt/enum": "^3.0"
     },
     "require-dev": {
       "orchestra/testbench": "^3.6",

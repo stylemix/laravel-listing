@@ -19,6 +19,7 @@ class CreateBooksTable extends Migration
 			$table->increments('id');
 			$table->string('title');
 			$table->timestamps();
+			$table->entityColumns();
 		});
 
 		Entities::createDataTable('books');

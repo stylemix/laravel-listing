@@ -1,6 +1,6 @@
 <?php
 
-namespace Stylemix\Listing\Tests;
+namespace Stylemix\Listing\Testing;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -17,7 +17,7 @@ trait ElasticSearchIndexing
 
 		$this->afterApplicationCreated(function () {
 			$prefix = Config::get('elasticquent.prefix') . '-test-';
-			Config::set('elasticquent.prefix', $prefix);
+			Config::set('elasticquent.prefix', ltrim($prefix, '-'));
 			Artisan::call('entities:init', ['--force' => true]);
 		});
 	}
