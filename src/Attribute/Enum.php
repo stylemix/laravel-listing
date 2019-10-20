@@ -4,6 +4,7 @@ namespace Stylemix\Listing\Attribute;
 
 use Illuminate\Support\Arr;
 use Stylemix\Listing\Contracts\Aggregateble;
+use Stylemix\Listing\Facades\Elastic;
 
 /**
  * @property mixed $source Enum keywords source
@@ -53,30 +54,21 @@ class Enum extends Keyword implements Aggregateble
 	/**
 	 * @inheritDoc
 	 */
-	public function applyAggregation($aggregations, $filter)
+	public function applyAggregation()
 	{
-		$aggregations->put($this->name, [
-			'filter' => ['bool' => ['filter' => $filter->except($this->name)->values()->all()]],
-			'aggs' => [
-				'available' => [
-					'terms' => [
-						'field' => $this->name,
-						'size' => $this->aggregationSize ?: 60
-					],
-					'aggs' => [
-						'entities' => [
-							'top_hits' => [
-								'_source' => [
-									$this->name,
-									$this->name . '_text',
-								],
-								'size' => 1,
-							]
-						],
-					],
-				],
-			],
-		]);
+		return Elastic::aggregation()
+			->terms('available')
+			->setField($this->name)
+			->setSize($this->aggregationSize ?: 60)
+			->addAggregation(
+				Elastic::aggregation()
+					->top_hits('entities')
+					->setSize(1)
+					->setSource([
+						$this->name,
+						$this->name . '_text',
+					])
+			);
 	}
 
 	/**

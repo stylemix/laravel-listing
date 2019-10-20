@@ -14,16 +14,33 @@ class AttributeCollection extends Collection
 {
 
 	/**
+	 * Attribute all keys cache
+	 *
+	 * @var array
+	 */
+	protected $allKeysCache = null;
+
+	/**
+	 * Attribute instances by all supported keys
+	 *
+	 * @var array
+	 */
+	protected $findCache = null;
+
+	/**
 	 * All key variations (name, fills, sorts)
 	 *
-	 * @return \Stylemix\Listing\AttributeCollection
+	 * @return array
 	 */
 	public function allKeys()
 	{
-		return $this->keys()
-			->merge($this->map->fills()->flatten())
-			->merge($this->map->sorts()->flatten())
-			->unique();
+		if (!is_null($this->allKeysCache)) {
+			return $this->allKeysCache;
+		}
+
+		return $this->allKeysCache = $this->reduce(function ($keys, Base $attribute) {
+			return array_unique(array_merge($keys, [$attribute->name], Arr::wrap($attribute->fills()), $attribute->filterKeys(), $attribute->sortKeys()));
+		}, []);
 	}
 
 	/**
@@ -65,7 +82,11 @@ class AttributeCollection extends Collection
 	 */
 	public function find($key)
 	{
-		return $this->keyByAll()->get($key);
+		if (is_null($this->findCache)) {
+			$this->findCache = $this->keyByAll()->all();
+		}
+
+		return isset($this->findCache[$key]) ? $this->findCache[$key] : null;
 	}
 
 	/**
@@ -83,7 +104,16 @@ class AttributeCollection extends Collection
 	 */
 	public function implementsFiltering()
 	{
-		return $this->whereInstanceOf(Filterable::class);
+		$result = $this->make();
+
+		$this->whereInstanceOf(Filterable::class)->each(function ($attribute) use ($result) {
+			/** @var \Stylemix\Listing\Contracts\Filterable $attribute */
+			foreach ($attribute->filterKeys() as $key) {
+				$result->put($key, $attribute);
+			}
+		});
+
+		return $result;
 	}
 
 	/**
@@ -106,7 +136,8 @@ class AttributeCollection extends Collection
 		$result = $this->make();
 
 		$this->whereInstanceOf(Sortable::class)->each(function ($attribute) use ($result) {
-			foreach ($attribute->sorts() as $key) {
+			/** @var \Stylemix\Listing\Contracts\Sortable $attribute */
+			foreach ($attribute->sortKeys() as $key) {
 				$result->put($key, $attribute);
 			}
 		});

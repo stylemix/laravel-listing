@@ -6,6 +6,7 @@ use Plank\Mediable\Media;
 use Stylemix\Listing\Facades\Entities;
 use Stylemix\Listing\ServiceProvider;
 use Stylemix\Listing\Tests\Models\DummyBook;
+use Stylemix\Listing\Tests\Models\DummyUser;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
@@ -18,6 +19,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
 		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 		$this->withFactories(__DIR__ . '/database/factories');
+		Entities::entity(DummyUser::class, 'user');
 		Entities::entity(DummyBook::class, 'book');
 	}
 

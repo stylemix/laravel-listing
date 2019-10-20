@@ -3,6 +3,7 @@
 namespace Stylemix\Listing\Attribute;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Fluent;
 use Plank\Mediable\Media;
 use Plank\Mediable\MediaUploader;
@@ -53,10 +54,10 @@ class Attachment extends Base implements Mutatable
 		$attributes = $model->getAttributes();
 
 		if ($key == $this->fillableName) {
-			return array_get($attributes, $key);
+			return Arr::get($attributes, $key);
 		}
 
-		return array_get($attributes, $key, function () use ($model) {
+		return Arr::get($attributes, $key, function () use ($model) {
 			return $this->getMedia($model);
 		});
 	}
@@ -75,7 +76,7 @@ class Attachment extends Base implements Mutatable
 			return;
 		}
 
-		$value = Collection::make(array_wrap($data->get($this->fillableName)));
+		$value = Collection::make(Arr::wrap($data->get($this->fillableName)));
 
 		$new = 0;
 

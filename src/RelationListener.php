@@ -3,6 +3,7 @@
 namespace Stylemix\Listing;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Arr;
 use Stylemix\Listing\Facades\Entities;
 
 class RelationListener implements ShouldQueue
@@ -93,7 +94,7 @@ class RelationListener implements ShouldQueue
 					foreach ($results as $model) {
 						try {
 							if ($attribute->multiple) {
-								$model[$attribute->fillableName] = array_diff(array_wrap($model[$attribute->fillableName]), [$entityKey]);
+								$model[$attribute->fillableName] = array_diff(Arr::wrap($model[$attribute->fillableName]), [$entityKey]);
 							}
 							else {
 								$model[$attribute->fillableName] = null;

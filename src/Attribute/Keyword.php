@@ -2,12 +2,16 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Elastica\Query\AbstractQuery;
+use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Contracts\Filterable;
 use Stylemix\Listing\Contracts\Searchable;
 use Stylemix\Listing\Contracts\Sortable;
+use Stylemix\Listing\Facades\Elastic;
 
-class Keyword extends Base implements Filterable, Sortable, Searchable
+class Keyword extends Base implements Filterable, Sortable, Searchable, Aggregateble
 {
+	use AppliesTermQuery, AppliesDefaultSort;
 
 	/**
 	 * Adds attribute mappings for elastic search
@@ -20,24 +24,38 @@ class Keyword extends Base implements Filterable, Sortable, Searchable
 	}
 
 	/**
-	 * Apply criteria to ES filter query
-	 *
-	 * @param mixed                          $criteria
-	 * @param \Illuminate\Support\Collection $filter
+	 * @inheritDoc
 	 */
-	public function applyFilter($criteria, $filter)
+	public function applyFilter($criteria, $key) : AbstractQuery
 	{
-		$filter->put($this->name, ['terms' => [$this->fillableName => array_wrap($criteria)]]);
+		return $this->createTermQuery($criteria, $this->name);
 	}
 
 	/**
-	 * @inheritdoc
+	 * @inheritDoc
 	 */
-	public function applySort($criteria, $sort, $key): void
+	public function applyAggregation()
 	{
-		$sort->put($key, [
-			$this->name => $criteria,
-		]);
+		return Elastic::aggregation()
+			->terms('available')
+			->setField($this->name);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function collectAggregations($aggregations, $raw)
+	{
+		$entries = [];
+
+		foreach (data_get($raw, $this->name . '.available.buckets', []) as $bucket) {
+			$entries[] = [
+				'value' => $bucket['value'],
+				'count' => $bucket['doc_count'],
+			];
+		}
+
+		$aggregations->put($this->name, $entries);
 	}
 
 }

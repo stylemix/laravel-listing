@@ -2,6 +2,7 @@
 
 namespace Stylemix\Listing;
 
+use Illuminate\Support\Arr;
 use Stylemix\Listing\Attribute\Base;
 
 class Form
@@ -111,7 +112,7 @@ class Form
 				return;
 			}
 
-			$fields = array_wrap($builder($attribute));
+			$fields = Arr::wrap($builder($attribute));
 			$fields = $this->prepare($fields, $attribute);
 			$form   = $form->concat($fields);
 		});

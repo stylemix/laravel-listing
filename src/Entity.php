@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Elasticquent\ElasticquentTrait;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Contracts\Queue\Factory as QueueFactoryContract;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -51,6 +52,9 @@ abstract class Entity extends Model
 		'dataAttributes',
 		'media',
 	];
+
+	/** @var array Map of enum attributes names to enum classes */
+	protected $enums = [];
 
 	protected $indexSettings = null;
 
@@ -163,9 +167,9 @@ abstract class Entity extends Model
 		$multiple = $this->getAttributeDefinitions()->where('multiple', true);
 		$multiple = array_merge($multiple->keys()->all(), $multiple->keyBy->fills()->keys()->all());
 
-		$casted = parent::addCastAttributesToArray(array_except($attributes, $multiple), $mutatedAttributes);
+		$casted = parent::addCastAttributesToArray(Arr::except($attributes, $multiple), $mutatedAttributes);
 
-		foreach (array_only($attributes, $multiple) as $key => $value) {
+		foreach (Arr::only($attributes, $multiple) as $key => $value) {
 			$casted[$key] = $this->castMultipleAttribute($key, $value);
 		}
 
@@ -179,7 +183,7 @@ abstract class Entity extends Model
 	 */
 	protected function getArrayableRelations()
 	{
-		return array_except($this->getArrayableItems($this->relations), ['data_attributes', 'dataAttributes', 'media']);
+		return Arr::except($this->getArrayableItems($this->relations), ['data_attributes', 'dataAttributes', 'media']);
 	}
 
 	/**
@@ -214,6 +218,14 @@ abstract class Entity extends Model
 			'value' => $this->getAttribute($primaryKey),
 			'label' => $this->title,
 		];
+	}
+
+	/**
+	 * @return \Stylemix\Listing\Elastic\Builder
+	 */
+	public function newElasticQuery()
+	{
+		return (new Builder())->setEntity($this);
 	}
 
 	/**
@@ -332,14 +344,14 @@ abstract class Entity extends Model
 	{
 		// Take all attributes keys
 		$only = is_null($only)
-			? static::getAttributeDefinitions()->allKeys()->all()
+			? static::getAttributeDefinitions()->allKeys()
 			: $only;
 
 		// If an attribute is a date, we will cast it to a string after converting it
 		// to a DateTime / Carbon instance. This is so we will get some consistent
 		// formatting while accessing attributes vs. arraying / JSONing a model.
 		$attributes = $this->addDateAttributesToArray(
-			$attributes = array_only($this->getAttributes(), $only)
+			$attributes = Arr::only($this->getAttributes(), $only)
 		);
 
 		// Next we will handle any casts that have been setup for this model and cast
@@ -398,7 +410,7 @@ abstract class Entity extends Model
 	 */
 	protected function castMultipleAttribute($key, $value)
 	{
-		$values = is_array($value) || $value instanceof \ArrayAccess ? $value : array_wrap($value);
+		$values = is_array($value) || $value instanceof \ArrayAccess ? $value : Arr::wrap($value);
 
 		if ($this->hasCast($key) && !$this->isJsonCastable($key)) {
 			foreach ($values as $i => $value) {
@@ -577,7 +589,7 @@ abstract class Entity extends Model
 	}
 
 	/**
-	 * Begin ES query
+	 * Begin querying model from ElasticSearch
 	 *
 	 * @param mixed $request
 	 *
@@ -585,7 +597,17 @@ abstract class Entity extends Model
 	 */
 	public static function search($request = null)
 	{
-		return Builder::make(static::class, $request);
+		$builder = (new static)->newElasticQuery();
+
+		if ($request instanceof Arrayable) {
+			$request = $request->toArray();
+		}
+
+		if (is_array($request)) {
+			$builder->fromArray($request);
+		}
+
+		return $builder;
 	}
 
 	/**

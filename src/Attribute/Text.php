@@ -4,6 +4,7 @@ namespace Stylemix\Listing\Attribute;
 
 use Stylemix\Listing\Contracts\Searchable;
 use Stylemix\Listing\Contracts\Sortable;
+use Stylemix\Listing\Elastic\Query\Sort;
 
 class Text extends Base implements Sortable, Searchable
 {
@@ -35,11 +36,9 @@ class Text extends Base implements Sortable, Searchable
 	/**
 	 * @inheritdoc
 	 */
-	public function applySort($criteria, $sort, $key) : void
+	public function applySort($criteria, $key) : Sort
 	{
-		$sort->put($key, [
-			$this->name . '.raw' => $criteria,
-		]);
+		return new Sort($this->name, $this->name . '.raw', $criteria);
 	}
 
 }

@@ -2,6 +2,7 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
 
@@ -35,6 +36,16 @@ abstract class Base extends Fluent
 	public $fillableName;
 
 	/**
+	 * @var string Attribute name for filtering
+	 */
+	public $filterableName;
+
+	/**
+	 * @var string Attribute name for sorting
+	 */
+	public $sortableName;
+
+	/**
 	 * Base constructor.
 	 *
 	 * @param string $name Attribute name
@@ -44,6 +55,8 @@ abstract class Base extends Fluent
 		$this->type = $this->type ?: snake_case(class_basename($this));
 		$this->name = $name;
 		$this->fillableName = $name;
+		$this->filterableName = $name;
+		$this->sortableName = $name;
 		$this->label = $this->getLabel();
 
 		parent::__construct([]);
@@ -83,13 +96,19 @@ abstract class Base extends Fluent
 	}
 
 	/**
-	 * Attribute keys that attribute is responsible for sort
-	 *
-	 * @return array
+	 * @inheritDoc
 	 */
-	public function sorts()
+	public function filterKeys() : array
 	{
-		return [$this->name, $this->fillableName];
+		return [$this->name];
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function sortKeys() : array
+	{
+		return [$this->sortableName];
 	}
 
 	/**
@@ -214,7 +233,7 @@ abstract class Base extends Fluent
 	 */
 	protected function getLabel()
 	{
-		return array_get(trans('attributes'), $this->name, function () {
+		return Arr::get(trans('attributes'), $this->name, function () {
 			return Str::title(str_replace('_', ' ', Str::snake($this->name)));
 		});
 	}

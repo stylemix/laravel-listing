@@ -14,15 +14,17 @@
 		}
 	],
     "require": {
-        "php": ">=7.0.0",
+        "php": ">=7.1.0",
+        "ext-json": "*",
         "elasticquent/elasticquent": "dev-master",
         "plank/laravel-mediable": "^2.8",
-        "konekt/enum": "^3.0"
+        "konekt/enum": "^3.0",
+        "ruflin/elastica": "6.*",
+        "stylemix/laravel-base": "dev-dev"
     },
     "require-dev": {
-      "orchestra/testbench": "^3.6",
-        "mockery/mockery": "^1.2",
-        "stylemix/laravel-base": "dev-dev"
+        "orchestra/testbench": "^3.6",
+        "mockery/mockery": "^1.2"
     },
     "autoload": {
         "psr-4": {

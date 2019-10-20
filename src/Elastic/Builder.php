@@ -2,67 +2,78 @@
 
 namespace Stylemix\Listing\Elastic;
 
+use BadMethodCallException;
+use Elastica\Query;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Fluent;
 use Stylemix\Listing\Attribute\Base;
+use Stylemix\Listing\AttributeCollection;
+use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Elastic\Query\Sort;
+use Stylemix\Listing\Entity;
+use Stylemix\Listing\Facades\Elastic;
 
 class Builder
 {
+
+	/**
+	 * @var \Elastica\Query
+	 */
+	protected $rootQuery;
+
+	/**
+	 * @var \Elastica\Query\AbstractQuery|\Elastica\Query\BoolQuery
+	 */
+	protected $filterQuery;
+
+	/**
+	 * @var \Elastica\Query\AbstractQuery|\Elastica\Query\BoolQuery
+	 */
+	protected $postFilterQuery;
+
+	/**
+	 * @var \Illuminate\Support\Collection
+	 */
+	protected $filterQueries;
+
+	/**
+	 * @var \Elastica\Query\FunctionScore
+	 */
+	protected $functionScore;
+
 	protected $request = [];
 
+	/**
+	 * @var int Requesting page number
+	 */
 	protected $page = 1;
 
 	protected $perPage = 15;
 
-	protected $where;
-
-	protected $whereNot;
-
-	protected $facet;
-
-	protected $search;
-
-	protected $query;
-
-	protected $sort;
-
-	protected $random;
-
-	protected $aggregations;
-
-	/** @var string Entity class name */
-	protected $entityClass;
-
-	/** @var \Stylemix\Listing\Entity Entity instance */
+	/**
+	 * The entity model being queried.
+	 *
+	 * @var \Stylemix\Listing\Entity
+	 */
 	protected $entity;
 
 	/** @var \Stylemix\Listing\AttributeCollection Attributes for the entity */
 	protected $attributes;
 
-	/** @var array Source filtering */
-	protected $source;
-
 	/** @var callable Callback for request body */
 	protected $buildWith;
 
-	private $sortMap = [];
-
 	/**
 	 * QueryBuilder constructor.
-	 *
-	 * @param string $entityClass
 	 */
-	public function __construct($entityClass)
+	public function __construct()
 	{
-		$this->where        = collect();
-		$this->whereNot     = collect();
-		$this->facet        = collect();
-		$this->sort         = collect();
-		$this->aggregations = collect();
-		$this->entityClass  = $entityClass;
-		$this->attributes   = $entityClass::getAttributeDefinitions();
-		$this->entity       = new $entityClass;
+		$this->rootQuery = new Query();
+		$this->rootQuery->setParams($this->request);
+		$this->rootQuery->setSize($this->perPage);
+		$this->filterQueries = collect();
 	}
 
 	/**
@@ -75,16 +86,23 @@ class Builder
 	 */
 	public function filter($attribute, $criteria)
 	{
-		if ($attribute == 'id') {
-			return $this->where($attribute, $criteria);
+		$filter = $this->resolveFilterableAttribute($attribute)->applyFilter($criteria, $attribute);
+		$this->filterQueries[$attribute] = $filter;
+
+		if (!$this->postFilterQuery) {
+			$this->postFilterQuery = $filter;
+		}
+		else {
+			if (!$this->postFilterQuery instanceof Query\BoolQuery) {
+				$boolQuery = Elastic::query()->bool();
+				$boolQuery->addFilter($this->postFilterQuery);
+				$this->postFilterQuery = $boolQuery;
+			}
+
+			$this->postFilterQuery->addFilter($filter);
 		}
 
-		/** @var \Stylemix\Listing\Contracts\Filterable $definition */
-		if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
-			return $this;
-		}
-
-		$definition->applyFilter($criteria, $this->facet);
+		$this->rootQuery->setPostFilter($this->postFilterQuery);
 
 		return $this;
 	}
@@ -92,7 +110,7 @@ class Builder
 	/**
 	 * Add query filter criteria
 	 *
-	 * @param string|callable $attribute Attribute name
+	 * @param string|callable|\Elastica\Query\AbstractQuery $attribute Attribute name, query statement or callback
 	 * @param mixed  $criteria  Search criteria to apply
 	 * @param bool   $negative  Apply not negative filter (must_not)
 	 *
@@ -100,38 +118,49 @@ class Builder
 	 */
 	public function where($attribute, $criteria = null, $negative = false)
 	{
-		$statements = collect();
-
-		// Allow developers to push custom raw statements
+		// Allow developers to chain statements with callback
 		if (is_callable($attribute)) {
-			$attribute($statements, $this);
-		}
-		elseif ($attribute == 'id') {
-			if (is_string($criteria) && strpos($criteria, ',') !== false) {
-				$criteria = explode(',', $criteria);
-			}
+			$attribute($this);
 
-			$statements['id'] = [
-				'terms' => [
-					'id' => array_map('intval', array_wrap($criteria)),
-				],
-			];
+			return $this;
+		}
+
+		// Support for passing query object
+		if ($attribute instanceof Query\AbstractQuery) {
+			$filter = $attribute;
 		}
 		else {
-			/** @var \Stylemix\Listing\Contracts\Filterable $definition */
-			if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
-				return $this;
+			if (is_null($criteria)) {
+				$filter = Elastic::query()->exists($attribute);
+				$negative = !$negative;
 			}
-
-			$definition->applyFilter($criteria, $statements);
+			else {
+				$filter = $this->resolveFilterableAttribute($attribute)->applyFilter($criteria, $attribute);
+			}
 		}
 
-		if ($negative) {
-			$this->whereNot = $this->whereNot->merge($statements->values());
+		if (!$this->filterQuery && !$negative) {
+			$this->filterQuery = $filter;
 		}
 		else {
-			$this->where = $this->where->merge($statements->values());
+			if (!$this->filterQuery instanceof Query\BoolQuery) {
+				$boolQuery = Elastic::query()->bool();
+				$boolQuery->addMust(Elastic::query()->match_all());
+				if ($this->filterQuery) {
+					$boolQuery->addFilter($this->filterQuery);
+				}
+				$this->filterQuery = $boolQuery;
+			}
+
+			if ($negative) {
+				$this->filterQuery->addMustNot($filter);
+			}
+			else {
+				$this->filterQuery->addFilter($filter);
+			}
 		}
+
+		$this->rootQuery->setQuery($this->filterQuery);
 
 		return $this;
 	}
@@ -165,7 +194,26 @@ class Builder
 			return $this;
 		}
 
-		$this->aggregations[$attribute] = $config;
+		$aggregatebles = $this->attributes->implementsAggregations();
+		/** @var \Stylemix\Listing\Contracts\Aggregateble $definition */
+		if (!($definition = $aggregatebles->get($attribute))) {
+			throw new BadMethodCallException(
+				sprintf('Attribute [%s] is not defined for aggregating in entity %s', $attribute, get_class($this->entity))
+			);
+		}
+
+		$postFilters = $this->filterQueries->except($attribute)->values()->all();
+		$agg = Elastic::aggregation()
+			->filter(
+				$attribute,
+				Elastic::query()->bool()->setParam('filter', $postFilters)
+			);
+
+		foreach (Arr::wrap($definition->applyAggregation()) as $subAgg) {
+			$agg->addAggregation($subAgg);
+		}
+
+		$this->rootQuery->addAggregation($agg);
 
 		return $this;
 	}
@@ -181,7 +229,7 @@ class Builder
 	{
 		$this->aggregations = collect();
 
-		foreach (array_wrap($aggregations) as $attribute => $config) {
+		foreach (Arr::wrap($aggregations) as $attribute => $config) {
 			if (!$config) {
 				continue;
 			}
@@ -196,20 +244,44 @@ class Builder
 	 * Add sort criteria
 	 *
 	 * @param mixed $sorts
+	 * @param mixed $direction
+	 * @param bool $prepend
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	public function sort($sorts)
+	public function sort($sorts, $direction = 'asc', $prepend = false)
 	{
 		$sortables = $this->attributes->implementsSortable();
+		$append = [];
+		if (!is_array($sorts)) {
+			$sorts = [$sorts => $direction];
+		}
 
 		foreach ($sorts as $key => $criteria) {
-			if (!$attribute = $sortables->get($key)) {
+			if ($key == '_score') {
+				$append[] = $key;
 				continue;
 			}
 
-			$attribute->applySort($criteria, $this->sort, $key);
+			/** @var $attribute \Stylemix\Listing\Contracts\Sortable */
+			if (!$attribute = $sortables->get($key)) {
+				throw new BadMethodCallException(
+					sprintf('Attribute [%s] is not defined for sorting in entity %s', $key, get_class($this->entity))
+				);
+			}
+
+			$append[] = $attribute->applySort($criteria, $key);
 		}
+
+		$sorts = $this->rootQuery->hasParam('sort') ? $this->rootQuery->getParam('sort') : [];
+		if ($prepend) {
+			$sorts = array_merge($append, $sorts);
+		}
+		else {
+			$sorts = array_merge($sorts, $append);
+		}
+
+		$this->rootQuery->setSort($sorts);
 
 		return $this;
 	}
@@ -224,11 +296,11 @@ class Builder
 		$array = new Fluent($array);
 
 		if ($array->search) {
-			$this->search($array->search);
+			$this->match($array->search);
 		}
 
 		if ($array->query) {
-			$this->query($array->query);
+			$this->queryString($array->query);
 		}
 
 		if ($array->where) {
@@ -254,19 +326,19 @@ class Builder
 		}
 
 		if ($array->sort) {
-			$this->sort(array_wrap($array->sort));
+			$this->sort(Arr::wrap($array->sort));
 		}
 
 		if ($array->page) {
-			$this->setPage($array->page);
+			$this->page($array->page);
 		}
 
 		if ($array->per_page) {
-			$this->setPerPage($array->per_page);
+			$this->perPage($array->per_page);
 		}
 
 		if ($array->source) {
-			$this->setSource(array_wrap($array->source));
+			$this->source(Arr::wrap($array->source));
 		}
 	}
 
@@ -277,96 +349,13 @@ class Builder
 	 */
 	public function build()
 	{
-		$body = array_merge($this->request, [
-			'size' => $this->perPage,
-			'from' => ($this->page - 1) * $this->perPage,
-			'track_scores' => true,
-		]);
-
-		if (is_array($this->source)) {
-			$body['_source'] = $this->source;
-		}
-
-		if ($this->query && count($fields = $this->getSearchFields())) {
-			$this->where[] = [
-				'query_string' => [
-					'query' => '*' . $this->query . '*',
-					'fields' => $fields,
-				],
-			];
-		}
-
-		if ($this->search && count($fields = $this->getSearchFields())) {
-			$this->facet['search'] = [
-				'multi_match' => [
-					'query' => $this->search,
-					'type' => 'cross_fields',
-					'fields' => $fields,
-				],
-			];
-		}
-
-		if ($this->where->isNotEmpty() || $this->whereNot->isNotEmpty()) {
-			$query = array_get($body, 'query');
-			$body['query'] = [
-				'bool' => (object) array_filter([
-					'filter' => $this->where->values()->merge(array_filter([$query]))->all(),
-					'must_not' => $this->whereNot->values()->all()
-				])
-			];
-		}
-
-		if ($this->random) {
-			$query = array_get($body, 'query');
-
-			$body['query'] = [
-				'function_score' => [
-					'functions' => [['random_score' => (object) []]],
-				]
-			];
-
-			if ($query) {
-				$body['query']['function_score']['query'] = $query;
-			}
-		}
-
-		if ($this->facet->isNotEmpty()) {
-			$body['post_filter'] = [
-				'bool' => [
-					'filter' => $this->facet->values()->all()
-				]
-			];
-		}
-
-		if (!$this->random && $this->sort->isNotEmpty()) {
-			$body['sort'] = [];
-			$this->sort->each(function ($sort, $key) use (&$body) {
-				$body['sort'][] = $sort;
-				$this->sortMap[$key] = count($body['sort']) - 1;
-			});
-		}
-
-		if ($this->aggregations->isNotEmpty()) {
-			$aggregatebles = $this->attributes->implementsAggregations();
-			$aggs = collect();
-
-			foreach ($this->aggregations as $attribute => $config) {
-				/** @var \Stylemix\Listing\Contracts\Aggregateble $definition */
-				if (!($definition = $aggregatebles->get($attribute))) {
-					continue;
-				}
-
-				$definition->applyAggregation($aggs, $this->facet);
-			}
-
-			$body['aggs'] = $aggs->all();
-		}
+		$array = $this->rootQuery->toArray();
 
 		if (is_callable($buildWith = $this->buildWith)) {
-			$body = $buildWith($body);
+			$array = $buildWith($array);
 		}
 
-		return $body;
+		return $array;
 	}
 
 	/**
@@ -378,10 +367,11 @@ class Builder
 	 */
 	public function get($params = [])
 	{
-		/** @var \Stylemix\Listing\Entity $instance */
-		$instance = new $this->entityClass;
-		$result   = $instance->getElasticSearchClient()->search(array_merge([
-			'index' => $instance->getIndexName(),
+		/** @var \Stylemix\Listing\Entity $model */
+		$model = $this->getEntity();
+
+		$result = $model->getElasticSearchClient()->search(array_merge([
+			'index' => $model->getIndexName(),
 			'body' => $this->build(),
 		], $params));
 
@@ -403,7 +393,7 @@ class Builder
 
 		$result['_per_page'] = $this->getPerPage();
 
-		return $instance::hydrateElasticquentResult($items, $meta = $result);
+		return $model::hydrateElasticquentResult($items, $meta = $result);
 	}
 
 	/**
@@ -416,7 +406,7 @@ class Builder
 	public function scroll($scrollId, $scroll = '1m')
 	{
 		/** @var \Stylemix\Listing\Entity $instance */
-		$instance = new $this->entityClass;
+		$instance = $this->getEntity();
 		$result   = $instance->getElasticSearchClient()->scroll([
 			'scroll' => $scroll,
 			'scroll_id' => $scrollId,
@@ -439,7 +429,7 @@ class Builder
 	public function chunk($size, $callback, $params = [])
 	{
 		$page = 1;
-		$results = $this->setPerPage($size)->get(array_merge([
+		$results = $this->perPage($size)->get(array_merge([
 			'scroll' => '1m',
 		], $params));
 
@@ -476,7 +466,7 @@ class Builder
 	 */
 	public function count()
 	{
-		return $this->setPerPage(1)
+		return $this->perPage(1)
 			->get()
 			->totalHits();
 	}
@@ -541,38 +531,24 @@ class Builder
 	}
 
 	/**
-	 * Make elastic search builder. Optionally fill builder with request.
+	 * Add match filter by keyword
 	 *
-	 * @param string $entityClass
-	 * @param mixed  $request
-	 *
-	 * @return \Stylemix\Listing\Elastic\Builder
-	 */
-	public static function make($entityClass, $request = null)
-	{
-		$builder = new static($entityClass);
-
-		if ($request instanceof Arrayable) {
-			$request = $request->toArray();
-		}
-
-		if (is_array($request)) {
-			$builder->fromArray($request);
-		}
-
-		return $builder;
-	}
-
-	/**
-	 * Add keyword search
-	 *
-	 * @param $keyword
+	 * @param string $keyword
+	 * @param string $type
 	 *
 	 * @return $this
 	 */
-	public function search($keyword)
+	public function match(string $keyword, $type = Query\MultiMatch::TYPE_CROSS_FIELDS)
 	{
-		$this->search = $keyword;
+		$query = (new Query\MultiMatch())
+			->setQuery($keyword)
+			->setType($type);
+
+		if (count($fields = $this->getSearchFields())) {
+			$query->setFields($fields);
+		}
+
+		$this->filterQuery->addFilter($query);
 
 		return $this;
 	}
@@ -580,13 +556,18 @@ class Builder
 	/**
 	 * Add query search
 	 *
-	 * @param $keyword
+	 * @param string $keyword
 	 *
 	 * @return $this
 	 */
-	public function query($keyword)
+	public function queryString(string $keyword)
 	{
-		$this->query = $keyword;
+		$queryString = new Query\QueryString('*' . $keyword . '*');
+		if (count($fields = $this->getSearchFields())) {
+			$queryString->setFields($fields);
+		}
+
+		$this->where[] = $queryString;
 
 		return $this;
 	}
@@ -596,21 +577,29 @@ class Builder
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	public function setPage(int $page)
+	public function page(int $page)
 	{
 		$this->page = $page;
+		$this->rootQuery->setFrom($this->perPage * ($page - 1));
 
 		return $this;
 	}
 
 	/**
+	 * Set page size for pagination
+	 *
 	 * @param int $perPage
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	public function setPerPage(int $perPage)
+	public function perPage(int $perPage)
 	{
 		$this->perPage = $perPage;
+		$this->rootQuery->setSize($perPage);
+
+		if ($this->page > 1) {
+			$this->page($this->page);
+		}
 
 		return $this;
 	}
@@ -628,7 +617,19 @@ class Builder
 	 */
 	protected function getSortMap(): array
 	{
-		return $this->sortMap;
+		$sorts = $this->rootQuery->getParam('sort');
+		if (!is_array($sorts)) {
+			return [];
+		}
+
+		$map = [];
+		foreach ($sorts as $i => $sort) {
+			if ($sort instanceof Sort) {
+				$map[$sort->getKey()] = $i;
+			}
+		}
+
+		return $map;
 	}
 
 	/**
@@ -636,9 +637,9 @@ class Builder
 	 *
 	 * @return \Stylemix\Listing\Elastic\Builder
 	 */
-	public function setSource(array $source)
+	public function source(array $source)
 	{
-		$this->source = $source;
+		$this->rootQuery->setSource($source);
 
 		return $this;
 	}
@@ -646,13 +647,19 @@ class Builder
 	/**
 	 * Set or unset random order
 	 *
-	 * @param boolean $random
+	 * @param $seed
 	 *
 	 * @return Builder
 	 */
-	public function random($random = true)
+	public function random($seed)
 	{
-		$this->random = $random;
+		if (!$this->functionScore) {
+			$this->rootQuery->setQuery(
+				$this->functionScore = Elastic::query()->function_score()
+			);
+		}
+
+		$this->functionScore->addRandomScoreFunction($seed, $this->filterQuery);
 
 		return $this;
 	}
@@ -686,6 +693,53 @@ class Builder
 	}
 
 	/**
+	 * Get current query component
+	 *
+	 * @return \Elastica\Query
+	 */
+	public function getQuery() : Query
+	{
+		return $this->rootQuery;
+	}
+
+	/**
+	 * Get the model instance being queried.
+	 *
+	 * @return \Stylemix\Listing\Entity
+	 */
+	public function getEntity() : Entity
+	{
+		return $this->entity;
+	}
+
+	/**
+	 * Set a model instance for the model being queried.
+	 *
+	 * @param \Stylemix\Listing\Entity $entity
+	 *
+	 * @return $this
+	 */
+	public function setEntity(Entity $entity)
+	{
+		$this->entity = $entity;
+		$this->setAttributes($entity::getAttributeDefinitions());
+
+		return $this;
+	}
+
+	/**
+	 * @param \Stylemix\Listing\AttributeCollection $attributes
+	 *
+	 * @return $this
+	 */
+	public function setAttributes(AttributeCollection $attributes)
+	{
+		$this->attributes = $attributes;
+
+		return $this;
+	}
+
+	/**
 	 * Get list of fields to use in full text search
 	 *
 	 * @return array
@@ -710,11 +764,84 @@ class Builder
 	}
 
 	/**
-	 * @return \Stylemix\Listing\Entity
+	 * Resolve attribute instance from entity definitions
+	 *
+	 * @param string $attribute
+	 *
+	 * @return \Stylemix\Listing\Contracts\Filterable
 	 */
-	public function getEntity() : \Stylemix\Listing\Entity
+	protected function resolveFilterableAttribute($attribute) : Filterable
 	{
-		return $this->entity;
+		/** @var \Stylemix\Listing\Contracts\Filterable $definition */
+		if (!($definition = $this->attributes->implementsFiltering()->get($attribute))) {
+			throw new BadMethodCallException(
+				sprintf('Attribute [%s] is not defined for filtering in entity %s', $attribute, get_class($this->entity))
+			);
+		}
+
+		return $definition;
 	}
 
+	/** Deprecated methods **/
+
+	/**
+	 * @param $keyword
+	 * @param array $args
+	 *
+	 * @return $this
+	 * @see match()
+	 * @deprecated
+	 */
+	public function search($keyword, ...$args)
+	{
+		return $this->match($keyword, ...$args);
+	}
+
+	/**
+	 * @param $keyword
+	 *
+	 * @return $this
+	 * @see queryString()
+	 * @deprecated
+	 */
+	public function query($keyword)
+	{
+		return $this->queryString($keyword);
+	}
+
+	/**
+	 * @param array $source
+	 *
+	 * @return $this
+	 * @deprecated
+	 * @see queryString()
+	 */
+	public function setSource(array $source)
+	{
+		return $this->source($source);
+	}
+
+	/**
+	 * @param int $perPage
+	 *
+	 * @return $this
+	 * @deprecated
+	 * @see perPage()
+	 */
+	public function setPerPage(int $perPage)
+	{
+		return $this->perPage($perPage);
+	}
+
+	/**
+	 * @param int $page
+	 *
+	 * @return $this
+	 * @deprecated
+	 * @see page()
+	 */
+	public function setPage(int $page)
+	{
+		return $this->page($page);
+	}
 }

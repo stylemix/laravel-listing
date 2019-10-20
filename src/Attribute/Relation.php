@@ -2,11 +2,14 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Elastica\Query\AbstractQuery;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Fluent;
 use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Contracts\Filterable;
 use Stylemix\Listing\Entity;
+use Stylemix\Listing\Facades\Elastic;
 use Stylemix\Listing\Facades\Entities;
 
 /**
@@ -20,6 +23,7 @@ use Stylemix\Listing\Facades\Entities;
  */
 class Relation extends Base implements Filterable, Aggregateble
 {
+	use AppliesTermQuery;
 
 	protected $queryBuilder;
 
@@ -59,7 +63,7 @@ class Relation extends Base implements Filterable, Aggregateble
 
 		// Sort models by input ids
 		$array = collect();
-		foreach (array_wrap($model_id) as $id) {
+		foreach (Arr::wrap($model_id) as $id) {
 			$array[$id] = $results->get($id);
 		}
 
@@ -104,7 +108,7 @@ class Relation extends Base implements Filterable, Aggregateble
 
 		$mapping[$this->name] = [
 			'type' => 'nested',
-			'properties' => $this->mapProperties ? array_only($modelMapping, $this->mapProperties) : $modelMapping,
+			'properties' => $this->mapProperties ? Arr::only($modelMapping, $this->mapProperties) : $modelMapping,
 		];
 	}
 
@@ -127,48 +131,39 @@ class Relation extends Base implements Filterable, Aggregateble
 	}
 
 	/**
-	 * Apply search criteria to elastic search filter query
-	 *
-	 * @param mixed $criteria
-	 *
-	 * @param \Illuminate\Support\Collection $filter
+	 * @inheritDoc
 	 */
-	public function applyFilter($criteria, $filter)
+	public function filterKeys() : array
 	{
-		$filter->put($this->name, ['terms' => [$this->fillableName => array_wrap($criteria)]]);
+		return [$this->fillableName, $this->name];
 	}
 
 	/**
-	 * Apply aggregation to elastic search query
-	 *
-	 * @param \Illuminate\Support\Collection $aggregations
-	 * @param \Illuminate\Support\Collection $filter
+	 * @inheritDoc
 	 */
-	public function applyAggregation($aggregations, $filter)
+	public function applyFilter($criteria, $key) : AbstractQuery
 	{
-		$aggregations->put($this->name, [
-			'filter' => ['bool' => ['filter' => $filter->except($this->name)->values()->all()]],
-			'aggs' => [
-				'nested' => [
-					'nested' => ['path' => $this->name],
-					'aggs' => [
-						'available' => [
-							'terms' => [
-								'field' => $this->name . '.id',
-								'size' => $this->aggregationSize ?: 60
-							],
-							'aggs' => [
-								'entities' => [
-									'top_hits' => [
-										'size' => 1,
-									]
-								],
-							],
-						]
-					]
-				]
-			],
-		]);
+		return $this->createTermQuery($criteria, $this->fillableName);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function applyAggregation()
+	{
+		return Elastic::aggregation()
+			->nested('nested', $this->name)
+			->addAggregation(
+				Elastic::aggregation()
+					->terms('available')
+					->setField($this->name . '.id')
+					->setSize($this->aggregationSize ?: 60)
+					->addAggregation(
+						Elastic::aggregation()
+							->top_hits('entities')
+							->setSize(1)
+					)
+			);
 	}
 
 	/**
@@ -224,7 +219,7 @@ class Relation extends Base implements Filterable, Aggregateble
 			return collect();
 		}
 
-		$model_id = array_wrap($model_id);
+		$model_id = Arr::wrap($model_id);
 
 		return $this->getQueryBuilder()
 			->whereIn($this->otherKey, $model_id)

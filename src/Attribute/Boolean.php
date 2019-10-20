@@ -2,10 +2,15 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Elastica\Query\AbstractQuery;
+use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Facades\Elastic;
 
-class Boolean extends Base implements Filterable
+class Boolean extends Base implements Filterable, Aggregateble
 {
+
+	use AppliesTermQuery;
 
 	/**
 	 * Adds attribute mappings for elastic search
@@ -22,9 +27,39 @@ class Boolean extends Base implements Filterable
 		$casts[$this->name] = 'boolean';
 	}
 
-	public function applyFilter($criteria, $filter)
+	/**
+	 * @inheritDoc
+	 */
+	public function applyFilter($criteria, $key) : AbstractQuery
 	{
-		$filter[$this->name] = ['term' => [$this->name => (boolean) $criteria]];
+		return $this->createTermQuery((boolean) $criteria, $this->name);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function applyAggregation()
+	{
+		return Elastic::aggregation()
+			->terms('available')
+			->setField($this->name);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function collectAggregations($aggregations, $raw)
+	{
+		$entries = [];
+
+		foreach (data_get($raw, $this->name . '.available.buckets', []) as $bucket) {
+			$entries[] = [
+				'value' => $bucket['value'],
+				'count' => $bucket['doc_count'],
+			];
+		}
+
+		$aggregations->put($this->name, $entries);
 	}
 
 }

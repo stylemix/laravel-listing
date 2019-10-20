@@ -2,8 +2,13 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Elastica\Query\AbstractQuery;
+use Illuminate\Support\Arr;
 use Stylemix\Listing\Contracts\Filterable;
 use Stylemix\Listing\Contracts\Sortable;
+use Stylemix\Listing\Elastic\Query\Sort;
+use Stylemix\Listing\Elastic\Query\SortGeoDistance;
+use Stylemix\Listing\Facades\Elastic;
 
 class Location extends Base implements Filterable, Sortable
 {
@@ -38,39 +43,29 @@ class Location extends Base implements Filterable, Sortable
 	/**
 	 * @inheritdoc
 	 */
-	public function applyFilter($criteria, $filter)
+	public function applyFilter($criteria, $key) : AbstractQuery
 	{
-		$filter[$this->name] = [
-			'geo_distance' => [
-				$this->name . '.latlng' => $criteria['latlng'],
-				'distance' => $criteria['distance'],
-			],
-		];
+		return Elastic::query()->geo_distance($this->name . '.latlng', $criteria['latlng'], $criteria['distance']);
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function applySort($criteria, $sort, $key) : void
+	public function applySort($criteria, $key) : Sort
 	{
 		if (is_string($criteria) && strpos($criteria, '|') !== false) {
 			$criteria = explode('|', $criteria);
 		}
 
-		$criteria = array_wrap($criteria);
+		$criteria = Arr::wrap($criteria);
 		$criteria += [
 			1 => 'asc',
 			2 => 'm'
 		];
 
-		$sort->put($key, [
-			'_geo_distance' => [
-				$this->name . '.latlng' => $criteria[0],
-				'order' => $criteria[1],
-				'unit' => $criteria[2],
-				'mode' => 'min',
-				'distance_type' => 'arc'
-			],
-		]);
+		return (new SortGeoDistance($this->name, $this->name . '.latlng', $criteria[0]))
+			->setOrder($criteria[1])
+			->setUnit($criteria[2])
+			->setDistanceType('arc');
 	}
 }

@@ -4,10 +4,8 @@ namespace Stylemix\Listing;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\ServiceProvider as BaseProvider;
-use Stylemix\Generators\Commands\CrudCommand;
 use Stylemix\Listing\Attribute\Attachment;
 use Stylemix\Listing\Attribute\Boolean;
-use Stylemix\Listing\Attribute\Currency;
 use Stylemix\Listing\Attribute\Date;
 use Stylemix\Listing\Attribute\Email;
 use Stylemix\Listing\Attribute\Enum;
@@ -87,27 +85,24 @@ class ServiceProvider extends BaseProvider
 				->label($attribute->label);
 		});
 
-		EntityForm::register(Currency::class, function (Currency $attribute) {
-			return \Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
-				->required($attribute->required)
-				->min(0)
-				->multiple($attribute->multiple)
-				->label($attribute->label);
-		});
-
 		EntityForm::register(Price::class, function (Price $attribute) {
-			return [
+			$fields = [
 				\Stylemix\Base\Fields\NumberField::make($attribute->fillableName)
 					->required($attribute->required)
 					->min(0)
 					->multiple($attribute->multiple)
 					->label($attribute->label),
-				\Stylemix\Base\Fields\NumberField::make($attribute->saleName)
+			];
+
+			if ($attribute->withSale) {
+				$fields[] = \Stylemix\Base\Fields\NumberField::make($attribute->saleName)
 					->rules('nullable')
 					->min(0)
 					->multiple($attribute->multiple)
-					->label($attribute->saleLabel)
-			];
+					->label($attribute->saleLabel);
+			}
+
+			return $fields;
 		});
 
 		EntityForm::register(Email::class, function (Keyword $attribute) {

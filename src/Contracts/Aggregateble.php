@@ -2,16 +2,18 @@
 
 namespace Stylemix\Listing\Contracts;
 
+/**
+ * @property integer $aggregationSize Size for aggregation
+ */
 interface Aggregateble
 {
 
 	/**
 	 * Apply aggregation to elastic search query
 	 *
-	 * @param \Illuminate\Support\Collection $aggregations
-	 * @param \Illuminate\Support\Collection $filter
+	 * @return \Elastica\Aggregation\AbstractAggregation
 	 */
-	public function applyAggregation($aggregations, $filter);
+	public function applyAggregation();
 
 	/**
 	 * Collect aggregations from raw ES result

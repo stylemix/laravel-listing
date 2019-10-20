@@ -2,13 +2,14 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Elastica\Query\AbstractQuery;
 use Stylemix\Listing\Contracts\Filterable;
 use Stylemix\Listing\Contracts\Sortable;
 
 class Date extends Base implements Sortable, Filterable
 {
 
-	use AppliesNumericQuery, AppliesDefaultSort;
+	use AppliesRangeQuery, AppliesDefaultSort;
 
 	/**
 	 * Adds attribute mappings for elastic search
@@ -30,5 +31,13 @@ class Date extends Base implements Sortable, Filterable
 	public function applyCasts($casts)
 	{
 		$casts->put($this->name, 'datetime');
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function applyFilter($criteria, $key) : AbstractQuery
+	{
+		return $this->createRangeQuery($criteria);
 	}
 }

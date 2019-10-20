@@ -2,17 +2,17 @@
 
 namespace Stylemix\Listing\Attribute;
 
+use Stylemix\Listing\Elastic\Query\Sort;
+
 trait AppliesDefaultSort
 {
 
 	/**
 	 * @inheritdoc
 	 */
-	public function applySort($criteria, $sort, $key) : void
+	public function applySort($criteria, $key) : Sort
 	{
-		$sort->put($key, [
-			$key => $criteria,
-		]);
+		return new Sort($key, $this->sortableName ?: $this->name, $criteria);
 	}
 
 }
