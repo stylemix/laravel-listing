@@ -18,9 +18,9 @@
         "ext-json": "*",
         "elasticquent/elasticquent": "dev-master",
         "plank/laravel-mediable": "^2.8",
-        "konekt/enum": "^3.0",
+        "konekt/enum": "^2.0|^3.0",
         "ruflin/elastica": "6.*",
-        "stylemix/laravel-base": "dev-dev"
+        "stylemix/laravel-base": "^0.5"
     },
     "require-dev": {
         "orchestra/testbench": "^3.6",
