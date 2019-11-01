@@ -38,10 +38,8 @@ class Attachment extends Base implements Mutatable
 		$mapping[$this->name] = [
 			'properties' => [
 				'id' => ['type' => 'integer'],
-				'url' => ['type' => 'keyword'],
 				'disk' => ['type' => 'keyword'],
-				'directory' => ['type' => 'keyword'],
-				'filename' => ['type' => 'keyword'],
+				'path' => ['type' => 'keyword'],
 				'mime_type' => ['type' => 'keyword'],
 				'aggregate_type' => ['type' => 'keyword'],
 				'size' => ['type' => 'integer'],
@@ -179,10 +177,8 @@ class Attachment extends Base implements Mutatable
 	{
 		return new Fluent([
 			'id' => $media->id,
-			'url' => $media->getUrl(),
 			'disk' => $media->disk,
-			'directory' => $media->directory,
-			'filename' => $media->filename . '.' . $media->extension,
+			'path' => $media->directory . '/' . $media->filename . '.' . $media->extension,
 			'mime_type' => $media->mime_type,
 			'aggregate_type' => $media->aggregate_type,
 			'size' => $media->size,
