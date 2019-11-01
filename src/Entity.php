@@ -198,7 +198,6 @@ abstract class Entity extends Model
 		return $array->merge([
 			'_score' => $this->documentScore(),
 			'_sort' => $this->sortValues(),
-			'_version' => $this->documentVersion(),
 		])->all();
 	}
 
