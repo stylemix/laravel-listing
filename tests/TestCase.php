@@ -19,8 +19,9 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
 		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 		$this->withFactories(__DIR__ . '/database/factories');
-		Entities::entity(DummyUser::class, 'user');
-		Entities::entity(DummyBook::class, 'book');
+
+		Entities::register('user', DummyUser::class);
+		Entities::register('book', DummyBook::class);
 	}
 
 	protected function getPackageProviders($app)

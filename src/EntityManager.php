@@ -48,16 +48,46 @@ class EntityManager extends Container
 		Schema::dropIfExists($base . '_data');
 	}
 
+	/**
+	 * Register an entity class
+	 *
+	 * @param string $alias Alias for short references
+	 * @param string $class Entity class name
+	 */
+	public function register($alias, $class)
+	{
+		$this->bind($alias, function () use ($class) {
+			return new $class;
+		});
+		$this->instance($alias . ':class', $class);
+		$this->alias($alias, $class);
+	}
+
+	/**
+	 * Get entity class by alias
+	 *
+	 * @param string $alias
+	 *
+	 * @return string
+	 */
+	public function modelClass($alias)
+	{
+		return $this->instances[$alias . ':class'];
+	}
+
     /**
      * Register an entity class
      *
      * @param string $class
      * @param string $name
+	 *
+	 * @deprecated Will be removed in v1.0
+	 * @see register()
      */
 	public function entity($class, $name = null)
 	{
 		$name = $name ?? Str::snake(class_basename($class));
-		$this->bind($name, $class);
+		$this->register($name, $class);
 	}
 
 	/**
