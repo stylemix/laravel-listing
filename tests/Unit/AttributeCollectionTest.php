@@ -6,6 +6,7 @@ use Stylemix\Listing\Attribute\Price;
 use Stylemix\Listing\Attribute\Relation;
 use Stylemix\Listing\Attribute\Text;
 use Stylemix\Listing\AttributeCollection;
+use Stylemix\Listing\Tests\Models\DummyBook;
 use Stylemix\Listing\Tests\TestCase;
 
 class AttributeCollectionTest extends TestCase
@@ -23,9 +24,25 @@ class AttributeCollectionTest extends TestCase
 			'text',
 			'price',
 			'price_sale',
-			'price_final',
 			'relation',
 			'relation_id',
 		], $collection->allKeys());
+	}
+
+	public function testSortables()
+	{
+		$attributes = DummyBook::getAttributeDefinitions()->implementsSortable();
+		$this->assertEquals([
+			'id',
+			'numeric',
+			'price',
+			'price_sale',
+			'boolean',
+			'keyword',
+			'enum',
+			'date',
+			'title',
+			'location',
+		], $attributes->keys()->all());
 	}
 }

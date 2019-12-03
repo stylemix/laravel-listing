@@ -5,12 +5,13 @@ namespace Stylemix\Listing\Attribute;
 use Elastica\Query\AbstractQuery;
 use Stylemix\Listing\Contracts\Aggregateble;
 use Stylemix\Listing\Contracts\Filterable;
+use Stylemix\Listing\Contracts\Sortable;
 use Stylemix\Listing\Facades\Elastic;
 
-class Boolean extends Base implements Filterable, Aggregateble
+class Boolean extends Base implements Filterable, Sortable, Aggregateble
 {
 
-	use AppliesTermQuery;
+	use AppliesTermQuery, AppliesDefaultSort;
 
 	/**
 	 * Adds attribute mappings for elastic search

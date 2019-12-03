@@ -108,7 +108,7 @@ abstract class Base extends Fluent
 	 */
 	public function sortKeys() : array
 	{
-		return [$this->sortableName];
+		return [$this->name];
 	}
 
 	/**

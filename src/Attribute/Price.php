@@ -77,6 +77,14 @@ class Price extends Numeric
 	/**
 	 * @inheritDoc
 	 */
+	public function sortKeys() : array
+	{
+		return $this->withSale ? [$this->name, $this->saleName] : [$this->name];
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function applyFilter($criteria, $key) : AbstractQuery
 	{
 		if (is_array($criteria)) {

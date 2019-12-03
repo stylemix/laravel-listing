@@ -29,7 +29,7 @@ class DummyBook extends Entity
 		return [
 			Id::make(),
 			Numeric::make('numeric'),
-			Price::make('price'),
+			Price::make('price')->withSale(),
 			Boolean::make('boolean'),
 			Keyword::make('keyword'),
 			Enum::make('enum', DummyEnum::class),
