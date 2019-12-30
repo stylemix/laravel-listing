@@ -121,6 +121,18 @@ class QueryBuilderTest extends TestCase
 		], $result['query']);
 	}
 
+	public function testQueryString()
+	{
+		$query = DummyBook::search()
+			->queryString('keyword')
+			->getQuery();
+
+		/** @var \Elastica\Query\QueryString $queryString */
+		$queryString = $query->getQuery();
+		$this->assertInstanceOf(\Elastica\Query\QueryString::class, $queryString);
+		$this->assertEquals('*keyword*', $queryString->getParam('query'));
+	}
+
 	public function testFilter()
 	{
 		$result = DummyBook::search()
@@ -163,6 +175,15 @@ class QueryBuilderTest extends TestCase
 				],
 			]
 		], $result['query']);
+	}
+
+	public function testEarlyRandomThrowsException()
+	{
+		$this->expectException(\BadMethodCallException::class);
+		DummyBook::search()
+			->random(10)
+			->where('id', 1)
+			->build();
 	}
 
 	public function testSort()

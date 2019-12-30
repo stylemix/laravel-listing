@@ -4,6 +4,7 @@ namespace Stylemix\Listing\Elastic;
 
 use BadMethodCallException;
 use Elastica\Query;
+use Elastica\Query\AbstractQuery;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
@@ -139,32 +140,10 @@ class Builder
 			}
 		}
 
-		if (!$this->filterQuery && !$negative) {
-			$this->filterQuery = $filter;
-		}
-		else {
-			if (!$this->filterQuery instanceof Query\BoolQuery) {
-				$boolQuery = Elastic::query()->bool();
-				$boolQuery->addMust(Elastic::query()->match_all());
-				if ($this->filterQuery) {
-					$boolQuery->addFilter($this->filterQuery);
-				}
-				$this->filterQuery = $boolQuery;
-			}
-
-			if ($negative) {
-				$this->filterQuery->addMustNot($filter);
-			}
-			else {
-				$this->filterQuery->addFilter($filter);
-			}
-		}
-
-		$this->rootQuery->setQuery($this->filterQuery);
+		$this->addFilterQuery($filter, $negative);
 
 		return $this;
 	}
-
 
 	/**
 	 * Add negative query filter criteria
@@ -177,6 +156,86 @@ class Builder
 	public function whereNot($attribute, $criteria)
 	{
 		return $this->where($attribute, $criteria, true);
+	}
+
+	/**
+	 * Add match filter by keyword
+	 *
+	 * @param string $keyword
+	 * @param string $type
+	 *
+	 * @return $this
+	 */
+	public function match(string $keyword, $type = Query\MultiMatch::TYPE_CROSS_FIELDS)
+	{
+		$query = (new Query\MultiMatch())
+			->setQuery($keyword)
+			->setType($type);
+
+		if (count($fields = $this->getSearchFields())) {
+			$query->setFields($fields);
+		}
+		else {
+			throw new \RuntimeException('No attributes are available for match query');
+		}
+
+		$this->addFilterQuery($query);
+
+		return $this;
+	}
+
+	/**
+	 * Add query search
+	 *
+	 * @param string $keyword
+	 *
+	 * @return $this
+	 */
+	public function queryString(string $keyword)
+	{
+		$filter = new Query\QueryString('*' . $keyword . '*');
+		if (count($fields = $this->getSearchFields())) {
+			$filter->setFields($fields);
+		}
+		else {
+			throw new \RuntimeException('No attributes are available for querying by string');
+		}
+
+		$this->addFilterQuery($filter);
+
+		return $this;
+	}
+
+	/**
+	 * @param int $page
+	 *
+	 * @return \Stylemix\Listing\Elastic\Builder
+	 */
+	public function page(int $page)
+	{
+		$this->page = $page;
+		$this->rootQuery->setFrom($this->perPage * ($page - 1));
+
+		return $this;
+	}
+
+	/**
+	 * Set page size for pagination
+	 *
+	 * @param int $perPage
+	 *
+	 * @return \Stylemix\Listing\Elastic\Builder
+	 */
+	public function perPage(int $perPage)
+	{
+		$this->perPage = $perPage;
+		$this->rootQuery->setSize($perPage);
+
+		if ($this->page > 1) {
+			$this->page($this->page);
+		}
+
+		return $this;
 	}
 
 	/**
@@ -282,6 +341,40 @@ class Builder
 		}
 
 		$this->rootQuery->setSort($sorts);
+
+		return $this;
+	}
+
+	/**
+	 * Set or unset random order
+	 *
+	 * @param $seed
+	 *
+	 * @return Builder
+	 */
+	public function random($seed)
+	{
+		if (!$this->functionScore) {
+			$this->rootQuery->setQuery(
+				$this->functionScore = Elastic::query()->function_score()
+			);
+		}
+
+		$this->functionScore->addRandomScoreFunction($seed, $this->filterQuery);
+
+		return $this;
+	}
+
+	/**
+	 * Set ES source parameter
+	 *
+	 * @param array $source
+	 *
+	 * @return \Stylemix\Listing\Elastic\Builder
+	 */
+	public function source(array $source)
+	{
+		$this->rootQuery->setSource($source);
 
 		return $this;
 	}
@@ -531,80 +624,6 @@ class Builder
 	}
 
 	/**
-	 * Add match filter by keyword
-	 *
-	 * @param string $keyword
-	 * @param string $type
-	 *
-	 * @return $this
-	 */
-	public function match(string $keyword, $type = Query\MultiMatch::TYPE_CROSS_FIELDS)
-	{
-		$query = (new Query\MultiMatch())
-			->setQuery($keyword)
-			->setType($type);
-
-		if (count($fields = $this->getSearchFields())) {
-			$query->setFields($fields);
-		}
-
-		$this->filterQuery->addFilter($query);
-
-		return $this;
-	}
-
-	/**
-	 * Add query search
-	 *
-	 * @param string $keyword
-	 *
-	 * @return $this
-	 */
-	public function queryString(string $keyword)
-	{
-		$queryString = new Query\QueryString('*' . $keyword . '*');
-		if (count($fields = $this->getSearchFields())) {
-			$queryString->setFields($fields);
-		}
-
-		$this->where[] = $queryString;
-
-		return $this;
-	}
-
-	/**
-	 * @param int $page
-	 *
-	 * @return \Stylemix\Listing\Elastic\Builder
-	 */
-	public function page(int $page)
-	{
-		$this->page = $page;
-		$this->rootQuery->setFrom($this->perPage * ($page - 1));
-
-		return $this;
-	}
-
-	/**
-	 * Set page size for pagination
-	 *
-	 * @param int $perPage
-	 *
-	 * @return \Stylemix\Listing\Elastic\Builder
-	 */
-	public function perPage(int $perPage)
-	{
-		$this->perPage = $perPage;
-		$this->rootQuery->setSize($perPage);
-
-		if ($this->page > 1) {
-			$this->page($this->page);
-		}
-
-		return $this;
-	}
-
-	/**
 	 * @return int
 	 */
 	public function getPerPage(): int
@@ -630,38 +649,6 @@ class Builder
 		}
 
 		return $map;
-	}
-
-	/**
-	 * @param array $source
-	 *
-	 * @return \Stylemix\Listing\Elastic\Builder
-	 */
-	public function source(array $source)
-	{
-		$this->rootQuery->setSource($source);
-
-		return $this;
-	}
-
-	/**
-	 * Set or unset random order
-	 *
-	 * @param $seed
-	 *
-	 * @return Builder
-	 */
-	public function random($seed)
-	{
-		if (!$this->functionScore) {
-			$this->rootQuery->setQuery(
-				$this->functionScore = Elastic::query()->function_score()
-			);
-		}
-
-		$this->functionScore->addRandomScoreFunction($seed, $this->filterQuery);
-
-		return $this;
 	}
 
 	/**
@@ -843,5 +830,55 @@ class Builder
 	public function setPage(int $page)
 	{
 		return $this->page($page);
+	}
+
+	/**
+	 * Sets or adds filter depending on whether filter query is present or not
+	 *
+	 * @param \Elastica\Query\AbstractQuery $filter
+	 * @param bool $negative
+	 */
+	protected function addFilterQuery(AbstractQuery $filter, $negative = false): void
+	{
+		// Since random query wraps the main filterQuery into itself
+		// we wont be able to append any filterQuery into random function
+		// if it is already initialized and applied
+		if (!$this->filterQuery && $this->rootQuery->hasParam('query')) {
+			throw new BadMethodCallException('Filtering methods should be called before random()');
+		}
+
+		if (!$this->filterQuery && !$negative) {
+			$this->filterQuery = $filter;
+
+			if (!$this->rootQuery->hasParam('query')) {
+				$this->rootQuery->setQuery($this->filterQuery);
+			}
+		}
+		else {
+			$this->ensureBoolQuery();
+
+			if ($negative) {
+				$this->filterQuery->addMustNot($filter);
+			}
+			else {
+				$this->filterQuery->addFilter($filter);
+			}
+		}
+	}
+
+	/**
+	 * Converts filterQuery to bool query if it not converted yet
+	 */
+	protected function ensureBoolQuery(): void
+	{
+		if (!$this->filterQuery instanceof Query\BoolQuery) {
+			$boolQuery = Elastic::query()->bool();
+			$boolQuery->addMust(Elastic::query()->match_all());
+			if ($this->filterQuery) {
+				$boolQuery->addFilter($this->filterQuery);
+			}
+			$this->filterQuery = $boolQuery;
+			$this->rootQuery->setQuery($boolQuery);
+		}
 	}
 }
